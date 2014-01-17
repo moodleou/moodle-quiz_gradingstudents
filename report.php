@@ -346,7 +346,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
         }
 
         foreach ($slots as $slot) {
-            if (!question_behaviour::is_manual_grade_in_range($usageid, $slot)) {
+            if (!question_engine::is_manual_grade_in_range($usageid, $slot)) {
                 return false;
             }
         }
