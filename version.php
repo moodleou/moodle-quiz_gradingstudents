@@ -29,7 +29,7 @@ $plugin->requires  = 2012112900;
 $plugin->cron      = 0;
 $plugin->component = 'quiz_gradingstudents';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.0';
+$plugin->release   = 'v1.0 for Moodle 2.4+';
 
 $plugin->dependencies = array(
     'mod_quiz' => 2012112900,
