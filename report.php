@@ -305,7 +305,6 @@ class quiz_gradingstudents_report extends quiz_default_report {
                 array('class' => 'mdl-align'));
 
         // Display the form with one section for each attempt.
-        $usehtmleditor = can_use_html_editor();
         $sesskey = sesskey();
         echo html_writer::start_tag('form', array('method' => 'post',
                 'action' => $this->grade_question_url($usageid, $slots, $grade),
