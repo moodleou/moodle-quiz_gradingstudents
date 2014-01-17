@@ -1,0 +1,29 @@
+Manual grading by student
+
+This report enables markers to mark all questions for a student attempt on one page.
+Markers can:
+•   choose which student to mark,
+•   see all essay responses from that student,
+•   only see the PI for each student and ‘Confirmation code’
+•   enter marks for each question
+
+The UI displays a list of student attempts with the following columns
+
+Student   Attempts   To grade   Already graded   (Automatically graded)   Total
+
+The column with the heading in () apears if the link
+"Also show questions that have been graded automatically" is pressed,
+if you do not want this column to apear press the link
+"Hide questions that have been graded automatically"
+
+Appart form the Student column, all column are liked to the appropriate page.
+For each attempt you can see:
+•   the personal identifier (PI) for the student,
+•   attempt number for that student, which is linked to the review page,
+•   number of questions to be graded, markers can click on the link and
+    grade all or some of those questions,
+•   number of already graded questions, markers would have the oprtunity to
+    regrade some or all of those questions,
+•   number of automatically graded questions, markers would have the oprtunity to
+    regrade some or all of those questions,
+•   total number of questions in an attempt
