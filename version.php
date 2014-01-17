@@ -24,13 +24,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2013071500;
-$plugin->requires  = 2012112900;
+$plugin->version   = 2014011700;
+$plugin->requires  = 2013101800;
 $plugin->cron      = 0;
 $plugin->component = 'quiz_gradingstudents';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.0 for Moodle 2.4+';
+$plugin->release   = 'v1.1 for Moodle 2.6+';
 
 $plugin->dependencies = array(
-    'mod_quiz' => 2012112900,
+    'mod_quiz' => 2013110500,
 );
