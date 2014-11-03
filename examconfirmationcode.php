@@ -41,7 +41,7 @@ class quiz_gradingstudents_report_exam_confirmation_code {
      * @return NULL or string
      */
     public static function get_confirmation_code($quizidnumber, $pi, $version = 1) {
-        if (!preg_match('~\.(eca\d+)~', $quizidnumber, $matches)) {
+        if (!preg_match('~\w+-\w+\.((?i:eca|exm)\d+)~', $quizidnumber, $matches)) {
             return null;
         }
         list($courseshortname, $notused) = explode('.', $quizidnumber, 2);
