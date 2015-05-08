@@ -46,9 +46,9 @@ class quiz_gradingstudents_report_exam_confirmation_code {
         }
         list($courseshortname, $notused) = explode('.', $quizidnumber, 2);
         list($module, $pres) = explode('-', $courseshortname, 2);
-        $task = textlib::strtoupper($matches[1]);
-        $module = textlib::strtoupper($module);
-        $pres = textlib::strtoupper($pres);
+        $task = core_text::strtoupper($matches[1]);
+        $module = core_text::strtoupper($module);
+        $pres = core_text::strtoupper($pres);
         return self::calculate_confirmation_code($pi, $module, $pres, $task, $version);
     }
 

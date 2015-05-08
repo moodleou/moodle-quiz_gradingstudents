@@ -34,3 +34,5 @@ $plugin->release   = 'v1.2 for Moodle 2.6+';
 $plugin->dependencies = array(
     'mod_quiz' => 2013110500,
 );
+
+$plugin->outestssufficient = true;
