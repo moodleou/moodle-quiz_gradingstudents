@@ -24,7 +24,7 @@ Feature: Grading by students
       | Description | Quiz 1 description |
 
     And I add a "Short answer" question to the "Quiz 1" quiz with:
-      | Question name    | Short answer 001 |
+      | Question name    | Short answer 001                     |
       | Question text    | Where is the capital city of France? |
       | Answer 1         | Paris                                |
       | Grade            | 100%                                 |
@@ -51,7 +51,7 @@ Feature: Grading by students
     And I should see "Not yet answered"
     And I should see "Where is the capital city of France?"
     When I set the field "Answer:" to "Paris"
-    And I press "Next"
+    And I press "Finish attempt ..."
     Then I should see "Answer saved"
     When I press "Submit all and finish"
     And I click on "Submit all and finish" "button" in the "Confirmation" "dialogue"
@@ -65,7 +65,7 @@ Feature: Grading by students
     And I should see "Not yet answered"
     And I should see "Where is the capital city of France?"
     When I set the field "Answer:" to "London or Berlin"
-    And I press "Next"
+    And I press "Finish attempt ..."
     Then I should see "Answer saved"
     When I press "Submit all and finish"
     And I click on "Submit all and finish" "button" in the "Confirmation" "dialogue"
