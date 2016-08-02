@@ -1,4 +1,4 @@
-@ou @ouvle @mod @mod_quiz @quiz @quiz_gradingstudents
+@ou @ou_vle @mod @mod_quiz @quiz @quiz_gradingstudents
 Feature: Grading by students
 
   Background:
