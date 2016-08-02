@@ -62,7 +62,7 @@ class quiz_gradingstudents_report_exam_confirmation_code_testcase extends basic_
     }
 
     public function test_get_confirmation_code_form_of_idnubmer() {
-        // Not ECA or EXM
+        // Not ECA or EXM.
         $this->assertNull(quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
                         'mu123-14b.icma42', 'B7435280'));
 

@@ -213,7 +213,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
             if (has_capability ('mod/quiz:attempt', $this->context)) {
                 $reviewlink = html_writer::tag('a',
                                         get_string('attemptid', 'quiz_gradingstudents', $attempt->attemptnumber),
-                                        array('href'=>new moodle_url('/mod/quiz/review.php',
+                                        array('href' => new moodle_url('/mod/quiz/review.php',
                                         array('attempt' => $attempt->attemptid))));
             } else {
                 $reviewlink = get_string('attemptid', 'quiz_gradingstudents', $attempt->attemptnumber);
