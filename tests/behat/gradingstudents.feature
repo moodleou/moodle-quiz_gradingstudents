@@ -5,8 +5,8 @@ Feature: Grading by students
     Given the following "users" exist:
       | username | firstname | lastname | email               | idnumber |
       | teacher1 | T1        | Teacher1 | teacher1@moodle.com | T1000    |
-      | student1 | S1        | Student1 | student1@moodle.com | S1000    !
-      | student2 | S2        | Student2 | student2@moodle.com | S2000    !
+      | student1 | S1        | Student1 | student1@moodle.com | S1000    |
+      | student2 | S2        | Student2 | student2@moodle.com | S2000    |
     And the following "courses" exist:
       | fullname | shortname | category |
       | Course 1 | C1        | 0        |
