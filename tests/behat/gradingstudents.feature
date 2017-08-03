@@ -17,7 +17,7 @@ Feature: Grading by students
       | student2 | C1     | student        |
     When I log in as "admin"
     And I am on site homepage
-    And I follow "Course 1"
+    And I am on "Course 1" course homepage
     And I turn editing mode on
     And I add a "Quiz" to section "1" and I fill the form with:
       | Name        | Quiz 1             |
@@ -34,7 +34,7 @@ Feature: Grading by students
   @javascript
   Scenario: report with no attempts
     When I log in as "teacher1"
-    And I follow "Course 1"
+    And I am on "Course 1" course homepage
     And I follow "Quiz 1"
     And I navigate to "Manual grading by student" node in "Quiz administration > Results"
     Then I should see "Manual grading by student"
@@ -44,7 +44,7 @@ Feature: Grading by students
   @javascript
   Scenario: Report with attempts
     When I log in as "student1"
-    And I follow "Course 1"
+    And I am on "Course 1" course homepage
     And I follow "Quiz 1"
     And I press "Attempt quiz now"
     Then I should see "Question 1"
@@ -58,7 +58,7 @@ Feature: Grading by students
     And I log out
 
     When I log in as "student2"
-    And I follow "Course 1"
+    And I am on "Course 1" course homepage
     And I follow "Quiz 1"
     And I press "Attempt quiz now"
     Then I should see "Question 1"
@@ -72,7 +72,7 @@ Feature: Grading by students
     And I log out
 
     When I log in as "teacher1"
-    And I follow "Course 1"
+    And I am on "Course 1" course homepage
     And I follow "Quiz 1"
     And I navigate to "Manual grading by student" node in "Quiz administration > Results"
     Then I should see "Manual grading by student"
