@@ -16,7 +16,6 @@ Feature: Grading by students
       | student1 | C1     | student        |
       | student2 | C1     | student        |
     When I log in as "admin"
-    And I am on site homepage
     And I am on "Course 1" course homepage
     And I turn editing mode on
     And I add a "Quiz" to section "1" and I fill the form with:
