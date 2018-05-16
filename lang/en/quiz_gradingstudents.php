@@ -64,3 +64,4 @@ $string['tograde'] = 'To grade';
 $string['total'] = 'Total';
 
 $string['updategrade'] = 'update grades';
+$string['privacy:metadata'] = 'The Manual grading by student plugin does not store any personal data.';
