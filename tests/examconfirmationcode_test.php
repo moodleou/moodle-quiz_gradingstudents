@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Unit tests for {@link quiz_grading_students_exam_confirmation_code}
+ *
+ * @package    quiz_gradingstudents
+ * @copyright  2013 The Open University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
@@ -23,8 +31,6 @@ require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/examconfirmationc
 /**
  * Unit tests for {@link quiz_grading_students_exam_confirmation_code}
  *
- * @package    quiz_gradingstudents
- * @category   phpunit
  * @copyright  2013 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

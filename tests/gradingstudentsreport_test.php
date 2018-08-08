@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Unit tests for {@link quiz_gradingstudents_report}
+ *
+ * @package    quiz_gradingstudents
+ * @copyright  2013 The Open University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
@@ -22,6 +30,9 @@ require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/report.php');
 
 /**
  * This class provides testable methods from quiz_gradingstudents_report by making them public
+ *
+ * @copyright  2013 The Open University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quiz_gradingstudents_testable_report extends quiz_gradingstudents_report {
     public function normalise_state($state) {
@@ -33,12 +44,11 @@ class quiz_gradingstudents_testable_report extends quiz_gradingstudents_report {
 /**
  * Unit tests for {@link quiz_gradingstudents_report}
  *
- * @package    quiz_gradingstudents
- * @category   phpunit
  * @copyright  2013 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quiz_gradingstudents_report_testcase extends basic_testcase {
+    /** @var quiz_gradingstudents_testable_report report instance to test. */
     protected $report;
 
     public function setUp() {

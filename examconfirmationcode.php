@@ -14,31 +14,45 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
-
 /**
- * This class implements the OU's 'Confirmation code' algorithm for end-of-course
- * assessed tasks. Graders need to enter this into the grading system as a
- * checksum to ensure that they are entering marks for the right student / task.
+ * Implementation of the OU's 'Confirmation code' algorithm.
  *
  * @package    quiz_gradingstudents
  * @copyright  2013 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
+
+
+/**
+ * This class implements the OU's 'Confirmation code' algorithm for end-of-course assessed tasks.
+ *
+ * Graders need to enter this into the grading system as a
+ * checksum to ensure that they are entering marks for the right student / task.
+ *
+ * @copyright  2013 The Open University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class quiz_gradingstudents_report_exam_confirmation_code {
+    /** @var int value used in the calculation. */
     const HASH_START = 5381;
+    /** @var int value used in the calculation. */
     const MODULUS    = 882377;
+    /** @var int value used in the calculation. */
     const NUM_CHARS  = 21;
+    /** @var string characters used to display the code. */
     const CODE_CHARS = 'BCDFGHJKLMNPQRSTVWXYZ';
-    const NUM_CODES  = 194481; // 21*21*21*21.
+    /** @var int value used in the calculation. */
+    const NUM_CODES  = 194481; // This equals 21*21*21*21.
 
     /**
      * Check for the correct idnumber and generate a confirmation code
-     * @param string $quizidnumber
-     * @param string $pi, personal identifier
-     * @param int $version
-     * @return NULL or string
+     *
+     * @param string $quizidnumber quiz idnumber.
+     * @param string $pi student user's idnumber.
+     * @param int $version (optional) defaults to 1.
+     * @return null|string the computed code if relevant, else null.
      */
     public static function get_confirmation_code($quizidnumber, $pi, $version = 1) {
         if (!preg_match('~\w+-\w+\.((?i:eca|exm)\d+)~', $quizidnumber, $matches)) {

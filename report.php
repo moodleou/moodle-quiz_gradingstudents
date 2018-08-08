@@ -47,14 +47,11 @@ class quiz_gradingstudents_report extends quiz_default_report {
     protected $users;
 
     public function display($quiz, $cm, $course) {
-        global $CFG, $DB, $PAGE;
-
         $this->quiz = $quiz;
         $this->cm = $cm;
         $this->course = $course;
 
         // Get the URL options.
-        $slot = optional_param('slot', null, PARAM_INT);
         $grade = optional_param('grade', null, PARAM_ALPHA);
         $usageid = optional_param('usageid', 0, PARAM_INT);
         $slots = optional_param('slots', '', PARAM_SEQUENCE);
@@ -112,7 +109,8 @@ class quiz_gradingstudents_report extends quiz_default_report {
 
     /**
      * Return the base URL of the report.
-     * @return string the URL.
+     *
+     * @return moodle_url the URL.
      */
     protected function base_url() {
         return new moodle_url('/mod/quiz/report.php',
@@ -121,9 +119,10 @@ class quiz_gradingstudents_report extends quiz_default_report {
 
     /**
      * Get the URL of the front page of the report that lists all attempts.
-     * @param $includeauto if not given, use the current setting, otherwise,
-     *      force a paricular value of includeauto in the URL.
-     * @return string the URL.
+     *
+     * @param bool|null $includeauto if not given, use the current setting, otherwise,
+     *      force a particular value of includeauto in the URL.
+     * @return moodle_url the URL.
      */
     protected function list_questions_url($includeauto = null) {
         $url = $this->base_url();
@@ -141,10 +140,12 @@ class quiz_gradingstudents_report extends quiz_default_report {
     }
 
     /**
-     * Return url for appropriate questions
-     * @param int $usageid
-     * @param int $slots
-     * @param string $grade
+     * Return url for appropriate questions.
+     *
+     * @param int $usageid the usage id of the attempt to grade.
+     * @param string $slots comma-sparated list of the slots to grade.
+     * @param string $grade type of things to grade, e.g. 'needsgrading'.
+     * @return moodle_url the requested URL.
      */
     protected function grade_question_url($usageid, $slots, $grade) {
         $url = $this->base_url();
@@ -154,11 +155,12 @@ class quiz_gradingstudents_report extends quiz_default_report {
     }
 
     /**
-     * Return formatted output
-     * @param object $attempt
-     * @param  string $type
-     * @param string $gradestring
-     * @return string, formatted string.
+     * Return formatted output.
+     *
+     * @param object $attempt augmented quiz_attempts row as from get_formatted_student_attempts.
+     * @param string $type type of attempts, e.g. 'needsgrading'.
+     * @param string $gradestring corresponding lang string for the action, e.g. 'grade'.
+     * @return string formatted string.
      */
     protected function format_count_for_table($attempt, $type, $gradestring) {
         $counts = $attempt->$type;
@@ -255,10 +257,11 @@ class quiz_gradingstudents_report extends quiz_default_report {
     }
 
     /**
-     * Display the UI for grading or regrading questions
-     * @param int $usageid
-     * @param string $slots
-     * @param string $grade
+     * Display the UI for grading or regrading questions.
+     *
+     * @param int $usageid the usage id of the attempt to grade.
+     * @param string $slots comma-separate list of which slots to grade.
+     * @param string $grade the type of slots to grade, e.g. 'needsgrading'.
      */
     protected function display_grading_interface($usageid, $slots, $grade) {
         global $CFG, $OUTPUT;
@@ -333,8 +336,10 @@ class quiz_gradingstudents_report extends quiz_default_report {
 
     /**
      * Validate submitted marks before updating the database
-     * @param int $usageid, uniqueid of the quiz attempt
-     * @param obj $slots, array of slots
+     *
+     * @param int $usageid usage id of the quiz attempt.
+     * @param string $slots comma-separated list of slots.
+     * @return bool whether all the submitted marks are valid.
      */
     protected function validate_submitted_marks($usageid, $slots) {
         if (!$usageid) {
@@ -355,14 +360,14 @@ class quiz_gradingstudents_report extends quiz_default_report {
     }
 
     /**
-     * Update the quiz attempt with the new grades
-     * @param int $usageid, uniqueid of the quiz attempt
+     * Update the quiz attempt with the new grades.
+     *
+     * @param int $usageid usage id of the quiz attempt being graded.
      */
     protected function process_submitted_data($usageid) {
         global $DB;
         $transaction = $DB->start_delegated_transaction();
         $attempt = $DB->get_record('quiz_attempts', array('uniqueid' => $usageid));
-        $quba = question_engine::load_questions_usage_by_activity($usageid);
         $attemptobj = new quiz_attempt($attempt, $this->quiz, $this->cm, $this->course);
         $attemptobj->process_submitted_actions(time());
         $transaction->allow_commit();
@@ -370,8 +375,9 @@ class quiz_gradingstudents_report extends quiz_default_report {
 
     /**
      * Return an array of quiz attempts, augmented by user idnumber.
-     * @param object $quiz
-     * @return an array of userid
+     *
+     * @param object $quiz quiz settings.
+     * @return array of objects containing fields from quiz_attempts with user idnumber.
      */
     private function get_quiz_attempts($quiz) {
         global $DB;
@@ -395,7 +401,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
 
     /**
      * Return and array of question attempts.
-     * @return object, an array of question attempts.
+     * @return array an array of question attempts.
      */
     private function get_question_attempts() {
         global $DB;
@@ -408,8 +414,10 @@ class quiz_gradingstudents_report extends quiz_default_report {
     }
 
     /**
-     * Reurn the latest state for a given question
-     * @param int $attemptid
+     * Return the latest state for a given question.
+     *
+     * @param int $attemptid as question_attempt id.
+     * @return string the attempt state.
      */
     private function get_current_state_for_this_attempt($attemptid) {
         global $DB;
@@ -422,7 +430,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
     }
 
     /**
-     * Return an array of quiz attempts withh all relevant information for each attempt
+     * Return an array of quiz attempts with all relevant information for each attempt.
      */
     protected function get_formatted_student_attempts() {
         $quizattempts = $this->get_quiz_attempts($this->quiz);
@@ -469,8 +477,10 @@ class quiz_gradingstudents_report extends quiz_default_report {
     }
 
     /**
-     * Normalise the string from the database table for easy comparison
+     * Normalise the string from the database table for easy comparison.
+     *
      * @param string $state
+     * @return string|null the classified state.
      */
     protected function normalise_state($state) {
         if (!$state) {
@@ -487,5 +497,4 @@ class quiz_gradingstudents_report extends quiz_default_report {
         }
         return null;
     }
-
 }
