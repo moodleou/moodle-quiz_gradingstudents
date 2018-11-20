@@ -35,7 +35,7 @@ Feature: Grading by students
     When I log in as "teacher1"
     And I am on "Course 1" course homepage
     And I follow "Quiz 1"
-    And I navigate to "Manual grading by student" node in "Quiz administration > Results"
+    And I navigate to "Results > Manual grading by student" in current page administration
     Then I should see "Manual grading by student"
     And I should see "Quiz 1"
     And I should see "Nothing to display"
@@ -73,7 +73,7 @@ Feature: Grading by students
     When I log in as "teacher1"
     And I am on "Course 1" course homepage
     And I follow "Quiz 1"
-    And I navigate to "Manual grading by student" node in "Quiz administration > Results"
+    And I navigate to "Results > Manual grading by student" in current page administration
     Then I should see "Manual grading by student"
     When I follow "Also show questions that have been graded automatically"
     Then I should see "S1000"
