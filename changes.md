@@ -1,6 +1,11 @@
 # Change log for the Manual grading by student quiz report
 
 
+## Changes in 1.6
+
+* Fix Behat for Moodle 3.6.
+
+
 ## Changes in 1.5
 
 * Privacy API implementation.
