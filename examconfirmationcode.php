@@ -110,4 +110,36 @@ class quiz_gradingstudents_report_exam_confirmation_code {
 
         return $code;
     }
+
+    /**
+     * Get the IDNumber of student that need to grade
+     *
+     * @param int $qubaid The id of question usage that need to grade
+     * @param int $quizid The id of quiz that need to grade
+     * @return string IDNumber of student that need to grade
+     */
+    public static function get_student_id_number_by_question_usage_id($qubaid, $quizid): string {
+        global $DB;
+
+        $idnumber = '';
+        $params = [
+                'uniqueid' => $qubaid,
+                'state' => quiz_attempt::FINISHED,
+                'quiz' => $quizid
+        ];
+
+        $attempt = $DB->get_record_sql('
+                SELECT u.idnumber
+                  FROM {quiz_attempts} quiza
+                  JOIN {user} u ON u.id = quiza.userid
+                 WHERE quiza.uniqueid = :uniqueid
+                       AND quiza.state = :state
+                       AND quiza.quiz = :quiz', $params);
+
+        if ($attempt) {
+            $idnumber = $attempt->idnumber;
+        }
+
+        return $idnumber;
+    }
 }
