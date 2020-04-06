@@ -47,6 +47,20 @@ class quiz_gradingstudents_report_exam_confirmation_code {
     const NUM_CODES  = 194481; // This equals 21*21*21*21.
 
     /**
+     * Can a quiz with this idnumber have a confirmation code?
+     *
+     * @param string|null $quizidnumber the quiz idnumber.
+     * @return string|null string like eca01 or exm01 if it can, null if it can't.
+     */
+    public static function quiz_can_have_confirmation_code(?string $quizidnumber) {
+        if (!preg_match('~\w+-\w+\.((?i:eca|exm)\d+)~', $quizidnumber, $matches)) {
+            return null;
+        }
+
+        return $matches[1];
+    }
+
+    /**
      * Check for the correct idnumber and generate a confirmation code
      *
      * @param string $quizidnumber quiz idnumber.
@@ -55,12 +69,13 @@ class quiz_gradingstudents_report_exam_confirmation_code {
      * @return null|string the computed code if relevant, else null.
      */
     public static function get_confirmation_code($quizidnumber, $pi, $version = 1) {
-        if (!preg_match('~\w+-\w+\.((?i:eca|exm)\d+)~', $quizidnumber, $matches)) {
+        $task = self::quiz_can_have_confirmation_code($quizidnumber);
+        if (!$task) {
             return null;
         }
         list($courseshortname, $notused) = explode('.', $quizidnumber, 2);
         list($module, $pres) = explode('-', $courseshortname, 2);
-        $task = core_text::strtoupper($matches[1]);
+        $task = core_text::strtoupper($task);
         $module = core_text::strtoupper($module);
         $pres = core_text::strtoupper($pres);
         return self::calculate_confirmation_code($pi, $module, $pres, $task, $version);
