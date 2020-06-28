@@ -5,9 +5,6 @@ This 'report' is actually a tool like the standard Manual grading quiz report,
 but which lets you grade all the responses by one student, rather than all
 the responses to one question.
 
-This version of the plugin, which is compatible with Moodle 3.4+ and later.
-Older versions of this plugin will work with older Moodle versions.
-
 You can install it from the Moodle plugins database using the link above.
 
 Alternatively, you can install it using git. In the top-level folder of your
