@@ -35,6 +35,31 @@ require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/examconfirmationc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quiz_gradingstudents_report_exam_confirmation_code_testcase extends basic_testcase {
+    /**
+     * Data provider for test_quiz_can_have_confirmation_code.
+     * @return array
+     */
+    public function quiz_can_have_confirmation_code_cases(): array {
+        return [
+            ['sk121-13r.eca30', 'eca30'],
+            ['sk121-13j.exm01', 'exm01'],
+            ['mu123-14b.icma42', null],
+            ['practicequiz', null],
+            ['B747-20B.icme30', 'icme30'],
+        ];
+    }
+
+    /**
+     * @dataProvider quiz_can_have_confirmation_code_cases
+     *
+     * @param string $idnumber
+     * @param string? $expectedresult
+     */
+    public function test_quiz_can_have_confirmation_code(string $idnumber, ?string $expectedresult = null) {
+        $this->assertSame($expectedresult,
+                quiz_gradingstudents_report_exam_confirmation_code::quiz_can_have_confirmation_code($idnumber));
+    }
+
     public function test_calculate_hash() {
         $this->assertEquals('PYWF', quiz_gradingstudents_report_exam_confirmation_code::calculate_hash(
                 'R335671X L120 1 12P TMA30'));

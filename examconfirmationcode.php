@@ -53,7 +53,7 @@ class quiz_gradingstudents_report_exam_confirmation_code {
      * @return string|null string like eca01 or exm01 if it can, null if it can't.
      */
     public static function quiz_can_have_confirmation_code(?string $quizidnumber) {
-        if (!preg_match('~\w+-\w+\.((?i:eca|exm)\d+)~', $quizidnumber, $matches)) {
+        if (!preg_match('~\w+-\w+\.((?i:eca|exm|icme)\d+)~', $quizidnumber, $matches)) {
             return null;
         }
 
