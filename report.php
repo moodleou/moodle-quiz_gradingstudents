@@ -212,7 +212,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
             if (!$includeauto && $attempt->needsgrading == 0 && $attempt->manuallygraded == 0) {
                 continue;
             }
-            if (has_capability ('mod/quiz:attempt', $this->context)) {
+            if (has_capability('mod/quiz:viewreports', $this->context)) {
                 $reviewlink = html_writer::tag('a',
                                         get_string('attemptid', 'quiz_gradingstudents', $attempt->attemptnumber),
                                         array('href' => new moodle_url('/mod/quiz/review.php',

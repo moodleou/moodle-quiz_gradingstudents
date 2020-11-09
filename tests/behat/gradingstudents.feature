@@ -4,7 +4,7 @@ Feature: Grading by students
   Background:
     Given the following "users" exist:
       | username | firstname | lastname | email               | idnumber |
-      | teacher1 | T1        | Teacher1 | teacher1@moodle.com | T1000    |
+      | teacher  | T1        | Teacher  | teacher@moodle.com  | T1000    |
       | student1 | S1        | Student1 | student1@moodle.com | S1000    |
       | student2 | S2        | Student2 | student2@moodle.com | S2000    |
     And the following "courses" exist:
@@ -12,72 +12,44 @@ Feature: Grading by students
       | Course 1 | C1        | 0        |
     And the following "course enrolments" exist:
       | user     | course | role           |
-      | teacher1 | C1     | editingteacher |
+      | teacher  | C1     | editingteacher |
       | student1 | C1     | student        |
       | student2 | C1     | student        |
-    When I log in as "admin"
-    And I am on "Course 1" course homepage
-    And I turn editing mode on
-    And I add a "Quiz" to section "1" and I fill the form with:
-      | Name        | Quiz 1             |
-      | Description | Quiz 1 description |
+    And the following "question categories" exist:
+      | contextlevel | reference | name           |
+      | Course       | C1        | Test questions |
+    And the following "activities" exist:
+      | activity   | name   | course | idnumber |
+      | quiz       | Quiz 1 | C1     | q1       |
+    And the following "questions" exist:
+      | questioncategory | qtype       | name  |
+      | Test questions   | shortanswer | SA    |
+    And quiz "Quiz 1" contains the following questions:
+      | question | page | maxmark |
+      | SA       | 1    |         |
 
-    And I add a "Short answer" question to the "Quiz 1" quiz with:
-      | Question name    | Short answer 001                     |
-      | Question text    | Where is the capital city of France? |
-      | Answer 1         | Paris                                |
-      | Grade            | 100%                                 |
-
-    And I log out
-
-  @javascript
   Scenario: report with no attempts
-    When I log in as "teacher1"
-    And I am on "Course 1" course homepage
-    And I follow "Quiz 1"
+    When I am on the "Quiz 1" "mod_quiz > View" page logged in as "teacher"
     And I navigate to "Results > Manual grading by student" in current page administration
     Then I should see "Manual grading by student"
     And I should see "Quiz 1"
     And I should see "Nothing to display"
 
-  @javascript
   Scenario: Report with attempts
-    When I log in as "student1"
-    And I am on "Course 1" course homepage
-    And I follow "Quiz 1"
-    And I press "Attempt quiz now"
-    Then I should see "Question 1"
-    And I should see "Not yet answered"
-    And I should see "Where is the capital city of France?"
-    When I set the field "Answer:" to "Paris"
-    And I press "Finish attempt ..."
-    Then I should see "Answer saved"
-    When I press "Submit all and finish"
-    And I click on "Submit all and finish" "button" in the "Confirmation" "dialogue"
-    And I log out
+    Given user "student1" has attempted "Quiz 1" with responses:
+      | slot | response |
+      |   1  | Frog     |
+    And user "student2" has attempted "Quiz 1" with responses:
+      | slot | response |
+      |   1  | Cat      |
 
-    When I log in as "student2"
-    And I am on "Course 1" course homepage
-    And I follow "Quiz 1"
-    And I press "Attempt quiz now"
-    Then I should see "Question 1"
-    And I should see "Not yet answered"
-    And I should see "Where is the capital city of France?"
-    When I set the field "Answer:" to "London or Berlin"
-    And I press "Finish attempt ..."
-    Then I should see "Answer saved"
-    When I press "Submit all and finish"
-    And I click on "Submit all and finish" "button" in the "Confirmation" "dialogue"
-    And I log out
-
-    When I log in as "teacher1"
-    And I am on "Course 1" course homepage
-    And I follow "Quiz 1"
+    When I am on the "Quiz 1" "mod_quiz > View" page logged in as "teacher"
     And I navigate to "Results > Manual grading by student" in current page administration
     Then I should see "Manual grading by student"
     When I follow "Also show questions that have been graded automatically"
     Then I should see "S1000"
     And I should see "S2000"
+    And "Attempt 1" "link" should exist
 
     # Adjust the mark for Student1
     When I click on "update grades" "link" in the "S1000" "table_row"
