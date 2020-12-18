@@ -49,7 +49,7 @@ class quiz_gradingstudents_testable_report extends quiz_gradingstudents_report {
  */
 class quiz_gradingstudents_report_testcase extends basic_testcase {
     public function test_normalise_state() {
-        /** @var quiz_gradingstudents_testable_report */
+        /** @var quiz_gradingstudents_testable_report $report */
         $report = new quiz_gradingstudents_testable_report();
 
         $this->assertEquals('needsgrading', $report->normalise_state('needsgrading'));
