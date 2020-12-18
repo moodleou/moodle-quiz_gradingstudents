@@ -48,21 +48,13 @@ class quiz_gradingstudents_testable_report extends quiz_gradingstudents_report {
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quiz_gradingstudents_report_testcase extends basic_testcase {
-    /** @var quiz_gradingstudents_testable_report report instance to test. */
-    protected $report;
-
-    public function setUp() {
-        $this->report = new quiz_gradingstudents_testable_report();
-    }
-
-    public function tearDown() {
-        $this->report = null;
-    }
-
     public function test_normalise_state() {
-        $this->assertEquals('needsgrading', $this->report->normalise_state('needsgrading'));
-        $this->assertEquals('autograded', $this->report->normalise_state('graded'));
-        $this->assertEquals('manuallygraded', $this->report->normalise_state('mangr'));
+        /** @var quiz_gradingstudents_testable_report */
+        $report = new quiz_gradingstudents_testable_report();
+
+        $this->assertEquals('needsgrading', $report->normalise_state('needsgrading'));
+        $this->assertEquals('autograded', $report->normalise_state('graded'));
+        $this->assertEquals('manuallygraded', $report->normalise_state('mangr'));
     }
 
 }
