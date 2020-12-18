@@ -1,5 +1,10 @@
 # Change log for the Manual grading by student quiz report
 
+## Changes in 1.8
+
+* Fix capability checks when showing a link to the review page.
+
+
 ## Changes in 1.7
 
 * Moodle 3.9 compatibility.
