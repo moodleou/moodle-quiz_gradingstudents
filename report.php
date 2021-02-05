@@ -241,7 +241,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
 
         $table = new html_table();
         $table->class = 'generaltable';
-        $table->id = 'questionstograde';
+        $table->id = 'studentstograde';
 
         $table->head[] = get_string('student', 'quiz_gradingstudents');
         $table->head[] = get_string('attempt', 'quiz_gradingstudents');
@@ -253,7 +253,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
         $table->head[] = get_string('total', 'quiz_gradingstudents');
 
         $table->data = $data;
-        echo html_writer::table($table);
+        echo html_writer::div(html_writer::table($table), 'no-overflow');
     }
 
     /**
