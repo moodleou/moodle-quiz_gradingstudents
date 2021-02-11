@@ -318,7 +318,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
                                 'usageid' => $usageid, 'slots' => $slots, 'sesskey' => $sesskey)));
             $quba = question_engine::load_questions_usage_by_activity($usageid);
             $displayoptions = quiz_get_review_options($this->quiz, $attempt, $this->context);
-            $displayoptions->hide_all_feedback();
+            $displayoptions->generalfeedback = question_display_options::HIDDEN;
             $displayoptions->history = question_display_options::HIDDEN;
             $displayoptions->manualcomment = question_display_options::EDITABLE;
         foreach ($attempt->questions as $slot => $question) {
