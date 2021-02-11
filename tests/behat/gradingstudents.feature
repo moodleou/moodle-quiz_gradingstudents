@@ -53,6 +53,9 @@ Feature: Grading by students
 
     # Adjust the mark for Student1
     When I click on "update grades" "link" in the "S1000" "table_row"
+    And I should see "Frog is a very good answer."
+    And I should not see "Generalfeedback: frog or toad would have been OK."
+    And I should see "The correct answer is: frog"
     And I set the field "Comment" to "I have adjusted your mark to 0.6"
     And I set the field "Mark" to "0.6"
     And I press "Save and go to the list of attempts"
@@ -60,6 +63,9 @@ Feature: Grading by students
     # Adjust the mark for Student2
     And I follow "Also show questions that have been graded automatically"
     And I click on "update grades" "link" in the "S2000" "table_row"
+    And I should see "That is a bad answer."
+    And I should not see "Generalfeedback: frog or toad would have been OK."
+    And I should see "The correct answer is: frog"
     And I set the field "Comment" to "I have adjusted your mark to 0.3"
     And I set the field "Mark" to "0.3"
     And I press "Save and go to the list of attempts"
