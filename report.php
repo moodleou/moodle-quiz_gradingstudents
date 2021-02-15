@@ -264,7 +264,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
      * @param string $grade the type of slots to grade, e.g. 'needsgrading'.
      */
     protected function display_grading_interface($usageid, $slots, $grade) {
-        global $CFG, $OUTPUT;
+        global $CFG, $OUTPUT, $PAGE;
 
         $attempts = $this->get_formatted_student_attempts();
         $attempt = $attempts[$usageid];
@@ -332,6 +332,10 @@ class quiz_gradingstudents_report extends quiz_default_report {
                 'type' => 'submit', 'value' => get_string('saveandgotothelistofattempts', 'quiz_gradingstudents'))),
                 array('class' => 'mdl-align')) .
                 html_writer::end_tag('div') . html_writer::end_tag('form');
+
+        $PAGE->requires->string_for_js('changesmadereallygoaway', 'moodle');
+        $PAGE->requires->yui_module('moodle-core-formchangechecker',
+                'M.core_formchangechecker.init', [['formid' => 'manualgradingform']]);
     }
 
     /**
