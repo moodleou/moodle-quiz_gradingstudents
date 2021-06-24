@@ -46,6 +46,7 @@ class quiz_gradingstudents_report_exam_confirmation_code_testcase extends basic_
             ['mu123-14b.icma42', null],
             ['practicequiz', null],
             ['B747-20B.icme30', 'icme30'],
+            ['abc123-20j.prj01', 'prj01'],
         ];
     }
 
@@ -90,6 +91,13 @@ class quiz_gradingstudents_report_exam_confirmation_code_testcase extends basic_
         $this->assertEquals('VZVG',
                 quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
                         'sk121-13j.exm01', 'B7435280'));
+    }
+
+    public function test_get_confirmation_code_prj() {
+        // Example from #480515.
+        $this->assertEquals('DJFM',
+                quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
+                        'abc123-20j.prj01', 'A1234567'));
     }
 
     public function test_get_confirmation_code_form_of_idnubmer() {
