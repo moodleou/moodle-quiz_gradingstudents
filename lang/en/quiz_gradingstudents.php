@@ -29,6 +29,7 @@ $string['attempt'] = 'Attempt';
 $string['attemptid'] = 'Attempt {$a}';
 $string['attemptstograde'] = 'Attempts to grade';
 $string['automaticallygraded'] = 'Automatically graded';
+$string['studentpi'] = 'Student PI';
 
 $string['backtothelistofstudentattempts'] = 'Back to the list of student attempts';
 

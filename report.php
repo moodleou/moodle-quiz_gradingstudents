@@ -45,6 +45,8 @@ class quiz_gradingstudents_report extends quiz_default_report {
     protected $quiz;
     protected $context;
     protected $users;
+    protected $shownames;
+    protected $showidentityfields;
 
     public function display($quiz, $cm, $course) {
         $this->quiz = $quiz;
@@ -64,11 +66,11 @@ class quiz_gradingstudents_report extends quiz_default_report {
         if ($includeauto) {
             $this->viewoptions['includeauto'] = 1;
         }
-
         // Check permissions.
         $this->context = context_module::instance($cm->id);
         require_capability('mod/quiz:grade', $this->context);
-
+        $this->shownames = has_capability('quiz/grading:viewstudentnames', $this->context);
+        $this->showidentityfields = has_capability('quiz/grading:viewidnumber', $this->context);
         // Get the list of questions in this quiz.
         $this->questions = quiz_report_get_significant_questions($quiz);
 
@@ -204,6 +206,8 @@ class quiz_gradingstudents_report extends quiz_default_report {
         echo html_writer::tag('p', html_writer::link($this->list_questions_url(!$includeauto),
                 $linktext), array('class' => 'toggleincludeauto'));
 
+        $identityfields = \core_user\fields::get_identity_fields($this->context, true);
+
         $data = array();
         foreach ($attempts as $key => $attempt) {
             if ($attempt->all == 0) {
@@ -220,8 +224,18 @@ class quiz_gradingstudents_report extends quiz_default_report {
             } else {
                 $reviewlink = get_string('attemptid', 'quiz_gradingstudents', $attempt->attemptnumber);
             }
-            $row = array();
-            $row[] = format_string($attempt->idnumber);
+
+            $row = [];
+            if ($this->shownames) {
+
+                $row[] = fullname($attempt);
+            }
+
+            if ($this->showidentityfields) {
+                foreach ($identityfields as $fieldname) {
+                      $row[] = format_string($attempt->$fieldname);
+                }
+            }
             $row[] = $reviewlink;
             $row[] = $this->format_count_for_table($attempt, 'needsgrading', 'grade');
             $row[] = $this->format_count_for_table($attempt, 'manuallygraded', 'updategrade');
@@ -243,10 +257,19 @@ class quiz_gradingstudents_report extends quiz_default_report {
         $table->class = 'generaltable';
         $table->id = 'studentstograde';
 
-        $table->head[] = get_string('student', 'quiz_gradingstudents');
+        if ($this->shownames) {
+            $table->head[] = get_string('student', 'quiz_gradingstudents');
+        }
+        if ($this->showidentityfields) {
+            foreach ($identityfields as $fieldname) {
+                $table->head[] = \core_user\fields::get_display_name($fieldname);
+
+            }
+        }
         $table->head[] = get_string('attempt', 'quiz_gradingstudents');
         $table->head[] = get_string('tograde', 'quiz_gradingstudents');
         $table->head[] = get_string('alreadygraded', 'quiz_gradingstudents');
+
         if ($includeauto) {
             $table->head[] = get_string('automaticallygraded', 'quiz_gradingstudents');
         }
@@ -282,18 +305,18 @@ class quiz_gradingstudents_report extends quiz_default_report {
              'slots' => $slots,
          );
 
-        if (array_key_exists('includeauto', $this->viewoptions)) {
-            $hidden['includeauto'] = $this->viewoptions['includeauto'];
-        }
+         if (array_key_exists('includeauto', $this->viewoptions)) {
+             $hidden['includeauto'] = $this->viewoptions['includeauto'];
+         }
 
-        // Print the heading and form.
-        echo question_engine::initialise_js();
+         // Print the heading and form.
+         echo question_engine::initialise_js();
 
-        require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/examconfirmationcode.php');
-        $pi = $attempt->idnumber;
-        $pi = $pi ? get_string('personalidentifier', 'quiz_gradingstudents', $pi) : '';
+         require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/examconfirmationcode.php');
+         $pi = $attempt->idnumber;
+         $pi = $pi ? get_string('personalidentifier', 'quiz_gradingstudents', $pi) : '';
 
-        $cfmcode = quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
+         $cfmcode = quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
                                             $this->cm->idnumber,  $attempt->idnumber);
         $cfmcode = $cfmcode ? get_string('confirmationcode', 'quiz_gradingstudents', $cfmcode) : '';
 
@@ -393,13 +416,18 @@ class quiz_gradingstudents_report extends quiz_default_report {
         list($usql, $params) = $DB->get_in_or_equal(array_keys($this->users), SQL_PARAMS_NAMED);
         $params['quizid'] = $quiz->id;
         $params['state'] = 'finished';
+        $userfieldsapi = \core_user\fields::for_identity($this->context, true)->with_name()->excluding('id', 'idnumber');
+        $fieldssql = $userfieldsapi->get_sql('u', true);
         $sql = "SELECT qa.id AS attemptid, qa.uniqueid, qa.attempt AS attemptnumber,
                        qa.quiz AS quizid, qa.layout, qa.userid, qa.timefinish,
-                       qa.preview, qa.state, u.idnumber
+                       qa.preview, qa.state, u.idnumber $fieldssql->selects
                   FROM {user} u
                   JOIN {quiz_attempts} qa ON u.id = qa.userid
-                 WHERE u.id $usql AND qa.quiz = :quizid AND qa.state = :state
-              ORDER BY u.idnumber ASC, attemptid ASC";
+                  $fieldssql->joins
+                  WHERE u.id $usql AND qa.quiz = :quizid AND qa.state = :state
+                  ORDER BY u.idnumber ASC, attemptid ASC";
+
+                 $params = array_merge($params, $fieldssql->params);
         return $DB->get_records_sql($sql, $params);
     }
 
