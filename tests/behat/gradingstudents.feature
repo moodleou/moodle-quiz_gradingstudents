@@ -1,15 +1,26 @@
-@ou @ou_vle @mod @mod_quiz @quiz @quiz_gradingstudents
+@ou @ou_vle @mod @mod_quiz @quiz @quiz_gradingstudents @javascript
 Feature: Grading by students
 
   Background:
+    Given I log in as "admin"
+    And I navigate to "Users > Accounts > User profile fields" in site administration
+    And I set the field "datatype" to "Text area"
+    And I set the following fields to these values:
+      | Short name  | customid    |
+      | Name        | Custom ID   |
+      | Category    | Identifiers |
+    And I click on "Save changes" "button"
+    And I log out
+
     Given the following "users" exist:
-      | username | firstname | lastname | email               | idnumber |
-      | teacher  | T1        | Teacher  | teacher@moodle.com  | T1000    |
-      | student1 | S1        | Student1 | student1@moodle.com | S1000    |
-      | student2 | S2        | Student2 | student2@moodle.com | S2000    |
+      | username | firstname | lastname | email               | idnumber | profile_field_customid |
+      | teacher  | T1        | Teacher  | teacher@moodle.com  | T1000    | CF123                  |
+      | student1 | S1        | Student1 | student1@moodle.com | S1000    | CF234                  |
+      | student2 | S2        | Student2 | student2@moodle.com | S2000    | CF345                  |
     And the following "courses" exist:
       | fullname | shortname | category |
       | Course 1 | C1        | 0        |
+
     And the following "course enrolments" exist:
       | user     | course | role           |
       | teacher  | C1     | editingteacher |
@@ -27,6 +38,8 @@ Feature: Grading by students
     And quiz "Quiz 1" contains the following questions:
       | question | page | maxmark |
       | SA       | 1    |         |
+    And the following config values are set as admin:
+      | showuseridentity | username,idnumber,profile_field_customid |
 
   Scenario: report with no attempts
     When I am on the "Quiz 1" "mod_quiz > View" page logged in as "teacher"
@@ -75,3 +88,34 @@ Feature: Grading by students
     When I follow "Also show questions that have been graded automatically"
     Then I should see "Hide questions that have been graded automatically"
     And I should see "Automatically graded"
+
+  Scenario: Admin with permission can see custom fields and student name
+    Given user "student1" has attempted "Quiz 1" with responses:
+      | slot | response |
+      |   1  | Snake    |
+    And user "student2" has attempted "Quiz 1" with responses:
+      | slot | response |
+      |   1  | Rabbit   |
+  When I am on the "Quiz 1" "mod_quiz > View" page logged in as "admin"
+  When I navigate to "Results > Manual grading by student" in current page administration
+  When I follow "Also show questions that have been graded automatically"
+  Then I should see "S1 Student1" in the "student1" "table_row"
+  And I should see "Custom ID"
+  Then I should see "CF234" in the "student1" "table_row"
+
+  Scenario: Teacher without permission can see custom fields and not student name
+    Given user "student1" has attempted "Quiz 1" with responses:
+      | slot | response |
+      |   1  | frog     |
+    And user "student2" has attempted "Quiz 1" with responses:
+      | slot | response |
+      |   1  | Duck     |
+    And the following "permission overrides" exist:
+      | capability                    | permission | role                  | contextlevel | reference |
+      | quiz/grading:viewstudentnames | Prevent    | editingteacher        | Course       | C1        |
+    When I am on the "Quiz 1" "mod_quiz > View" page logged in as "teacher"
+    When I navigate to "Results > Manual grading by student" in current page administration
+    When I follow "Also show questions that have been graded automatically"
+    Then I should not see "S1 Student1" in the "student1" "table_row"
+    And I should see "Custom ID"
+    Then I should see "CF234" in the "student1" "table_row"
