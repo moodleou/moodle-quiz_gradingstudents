@@ -33,7 +33,8 @@ $string['studentpi'] = 'Student PI';
 
 $string['backtothelistofstudentattempts'] = 'Back to the list of student attempts';
 
-$string['confirmationcode'] = '<strong>confirmation code</strong> {$a}';
+$string['confirmationcodeheading'] = 'Confirmation code';
+$string['confirmationcode'] = 'Confirmation code <strong>{$a}</strong>';
 
 $string['essayonly'] = 'The following questions need to be graded manually';
 
@@ -52,7 +53,7 @@ $string['hideautomaticallygraded'] = 'Hide questions that have been graded autom
 
 $string['nothingfound'] = 'Nothing to display';
 
-$string['personalidentifier'] = '<strong>Personal identifier</strong> {$a}';
+$string['personalidentifier'] = 'Personal identifier <strong>{$a}</strong>';
 $string['pluginname'] = 'Manual grading by student';
 
 $string['questionsthatneedgrading'] = 'Questions that need grading';

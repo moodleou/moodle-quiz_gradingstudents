@@ -25,6 +25,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/examconfirmationcode.php');
+
 
 /**
  * Quiz report to help teachers manually grade questions by students.
@@ -181,6 +183,9 @@ class quiz_gradingstudents_report extends quiz_default_report {
     protected function display_index($includeauto) {
         global $OUTPUT;
 
+        $showconfirmationcode = quiz_gradingstudents_report_exam_confirmation_code::quiz_can_have_confirmation_code(
+                $this->cm->idnumber);
+
         $attempts = $this->get_formatted_student_attempts();
         if ($groupmode = groups_get_activity_groupmode($this->cm)) {
             // Groups is being used.
@@ -225,6 +230,14 @@ class quiz_gradingstudents_report extends quiz_default_report {
                       $row[] = format_string($attempt->$fieldname);
                 }
             }
+            if ($showconfirmationcode) {
+                if ($attempt->idnumber) {
+                    $row[] = quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
+                            $this->cm->idnumber, $attempt->idnumber, );
+                } else {
+                    $row[] = '-';
+                }
+            }
             $row[] = $reviewlink;
             $row[] = $this->format_count_for_table($attempt, 'needsgrading', 'grade');
             $row[] = $this->format_count_for_table($attempt, 'manuallygraded', 'updategrade');
@@ -254,6 +267,9 @@ class quiz_gradingstudents_report extends quiz_default_report {
                 $table->head[] = \core_user\fields::get_display_name($fieldname);
 
             }
+        }
+        if ($showconfirmationcode) {
+            $table->head[] = get_string('confirmationcodeheading', 'quiz_gradingstudents');
         }
         $table->head[] = get_string('attempt', 'quiz_gradingstudents');
         $table->head[] = get_string('tograde', 'quiz_gradingstudents');
@@ -286,27 +302,26 @@ class quiz_gradingstudents_report extends quiz_default_report {
             redirect($this->list_questions_url(), get_string('alldoneredirecting', 'quiz_gradingstudents'));
         }
 
-         // Prepare the form.
-         $hidden = array(
-             'id' => $this->cm->id,
-             'mode' => 'gradingstudents',
-             'usageid' => $usageid,
-             'slots' => $slots,
-         );
+        // Prepare the form.
+        $hidden = array(
+            'id' => $this->cm->id,
+            'mode' => 'gradingstudents',
+            'usageid' => $usageid,
+            'slots' => $slots,
+        );
 
-         if (array_key_exists('includeauto', $this->viewoptions)) {
-             $hidden['includeauto'] = $this->viewoptions['includeauto'];
-         }
+        if (array_key_exists('includeauto', $this->viewoptions)) {
+            $hidden['includeauto'] = $this->viewoptions['includeauto'];
+        }
 
-         // Print the heading and form.
-         echo question_engine::initialise_js();
+        // Print the heading and form.
+        echo question_engine::initialise_js();
 
-         require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/examconfirmationcode.php');
-         $pi = $attempt->idnumber;
-         $pi = $pi ? get_string('personalidentifier', 'quiz_gradingstudents', $pi) : '';
+        $pi = $attempt->idnumber;
+        $pi = $pi ? get_string('personalidentifier', 'quiz_gradingstudents', $pi) : '';
 
-         $cfmcode = quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
-                                            $this->cm->idnumber,  $attempt->idnumber);
+        $cfmcode = quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
+                $this->cm->idnumber,  $attempt->idnumber);
         $cfmcode = $cfmcode ? get_string('confirmationcode', 'quiz_gradingstudents', $cfmcode) : '';
 
         echo $OUTPUT->heading(get_string('gradingstudentx', 'quiz_gradingstudents', $attempt->attemptnumber));
