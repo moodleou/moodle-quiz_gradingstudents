@@ -44,7 +44,6 @@ class quiz_gradingstudents_report extends quiz_default_report {
     protected $cm;
     protected $quiz;
     protected $context;
-    protected $users;
     protected $shownames;
     protected $showidentityfields;
 
@@ -79,16 +78,6 @@ class quiz_gradingstudents_report extends quiz_default_report {
             $this->process_submitted_data($usageid);
             redirect(new moodle_url('/mod/quiz/report.php',
                 array('id' => $this->cm->id, 'mode' => 'gradingstudents')));
-        }
-
-        // Get the group, and the list of significant users.
-        $this->currentgroup = $this->get_current_group($cm, $course, $this->context);
-        if ($this->currentgroup == self::NO_GROUPS_ALLOWED) {
-            $this->users = array();
-        } else {
-            $this->users = get_users_by_capability($this->context,
-                    array('mod/quiz:reviewmyattempts', 'mod/quiz:attempt'), '', '', '', '',
-                    $this->currentgroup);
         }
 
         $hasquestions = quiz_has_questions($quiz->id);;
@@ -406,28 +395,38 @@ class quiz_gradingstudents_report extends quiz_default_report {
      * @param object $quiz quiz settings.
      * @return array of objects containing fields from quiz_attempts with user idnumber.
      */
-    private function get_quiz_attempts($quiz) {
+    private function get_quiz_attempts() {
         global $DB;
 
-        if (empty($this->users)) {
-            return array();
+        // Get the group, and the list of significant users.
+        $currentgroup = $this->get_current_group($this->cm, $this->course, $this->context);
+        if ($currentgroup == self::NO_GROUPS_ALLOWED) {
+            return [];
         }
 
-        list($usql, $params) = $DB->get_in_or_equal(array_keys($this->users), SQL_PARAMS_NAMED);
-        $params['quizid'] = $quiz->id;
-        $params['state'] = 'finished';
-        $userfieldsapi = \core_user\fields::for_identity($this->context, true)->with_name()->excluding('id', 'idnumber');
+        $groupstudentsjoins = get_enrolled_with_capabilities_join($this->context, '',
+                ['mod/quiz:attempt', 'mod/quiz:reviewmyattempts'], $currentgroup);
+        $userfieldsapi = \core_user\fields::for_identity($this->context, true)
+                ->with_name()->excluding('id', 'idnumber');
+
+        $params = [
+            'quizid' => $this->quiz->id,
+            'state' => 'finished',
+        ];
         $fieldssql = $userfieldsapi->get_sql('u', true);
         $sql = "SELECT qa.id AS attemptid, qa.uniqueid, qa.attempt AS attemptnumber,
                        qa.quiz AS quizid, qa.layout, qa.userid, qa.timefinish,
                        qa.preview, qa.state, u.idnumber $fieldssql->selects
                   FROM {user} u
                   JOIN {quiz_attempts} qa ON u.id = qa.userid
-                  $fieldssql->joins
-                  WHERE u.id $usql AND qa.quiz = :quizid AND qa.state = :state
+                  {$groupstudentsjoins->joins}
+                  {$fieldssql->joins}
+                  WHERE {$groupstudentsjoins->wheres}
+                    AND qa.quiz = :quizid
+                    AND qa.state = :state
                   ORDER BY u.idnumber ASC, attemptid ASC";
 
-                 $params = array_merge($params, $fieldssql->params);
+                 $params = array_merge($fieldssql->params, $groupstudentsjoins->params, $params);
         return $DB->get_records_sql($sql, $params);
     }
 
@@ -465,7 +464,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
      * Return an array of quiz attempts with all relevant information for each attempt.
      */
     protected function get_formatted_student_attempts() {
-        $quizattempts = $this->get_quiz_attempts($this->quiz);
+        $quizattempts = $this->get_quiz_attempts();
         $attempts = $this->get_question_attempts();
         if (!$quizattempts) {
             return array();
