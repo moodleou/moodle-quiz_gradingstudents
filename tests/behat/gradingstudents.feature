@@ -2,21 +2,14 @@
 Feature: Grading by students
 
   Background:
-    Given I log in as "admin"
-    And I navigate to "Users > Accounts > User profile fields" in site administration
-    And I set the field "datatype" to "Text area"
-    And I set the following fields to these values:
-      | Short name  | customid    |
-      | Name        | Custom ID   |
-      | Category    | Identifiers |
-    And I click on "Save changes" "button"
-    And I log out
-
-    Given the following "users" exist:
-      | username | firstname | lastname | email               | idnumber | profile_field_customid |
-      | teacher  | T1        | Teacher  | teacher@moodle.com  | T1000    | CF123                  |
-      | student1 | S1        | Student1 | student1@moodle.com | S1000    | CF234                  |
-      | student2 | S2        | Student2 | student2@moodle.com | S2000    | CF345                  |
+    Given the following "custom profile fields" exist:
+      | datatype | shortname  | name           |
+      | text     | frog       | Favourite frog |
+    And the following "users" exist:
+      | username | firstname | lastname | email               | idnumber | profile_field_frog |
+      | teacher  | T1        | Teacher  | teacher@moodle.com  | T1000    | green frog         |
+      | student1 | S1        | Student1 | student1@moodle.com | S1000    | little frog        |
+      | student2 | S2        | Student2 | student2@moodle.com | S2000    | yellow frog        |
     And the following "courses" exist:
       | fullname | shortname | category |
       | Course 1 | C1        | 0        |
@@ -39,7 +32,7 @@ Feature: Grading by students
       | question | page | maxmark |
       | SA       | 1    |         |
     And the following config values are set as admin:
-      | showuseridentity | username,idnumber,profile_field_customid |
+      | showuseridentity | username,idnumber,profile_field_frog |
 
   Scenario: report with no attempts
     When I am on the "Quiz 1" "mod_quiz > View" page logged in as "teacher"
@@ -100,8 +93,8 @@ Feature: Grading by students
   When I navigate to "Results > Manual grading by student" in current page administration
   When I follow "Also show questions that have been graded automatically"
   Then I should see "S1 Student1" in the "student1" "table_row"
-  And I should see "Custom ID"
-  Then I should see "CF234" in the "student1" "table_row"
+  And I should see "Favourite frog"
+  Then I should see "little frog" in the "student1" "table_row"
 
   Scenario: Teacher without permission can see custom fields and not student name
     Given user "student1" has attempted "Quiz 1" with responses:
@@ -117,5 +110,5 @@ Feature: Grading by students
     When I navigate to "Results > Manual grading by student" in current page administration
     When I follow "Also show questions that have been graded automatically"
     Then I should not see "S1 Student1" in the "student1" "table_row"
-    And I should see "Custom ID"
-    Then I should see "CF234" in the "student1" "table_row"
+    And I should see "Favourite frog"
+    Then I should see "little frog" in the "student1" "table_row"
