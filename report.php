@@ -317,20 +317,23 @@ class quiz_gradingstudents_report extends quiz_default_report {
         // Print the heading and form.
         echo question_engine::initialise_js();
 
-        $pi = $attempt->idnumber;
-        $pi = $pi ? get_string('personalidentifier', 'quiz_gradingstudents', $pi) : '';
+        $info = [];
+        foreach (\core_user\fields::get_identity_fields($this->context) as $field) {
+            if ($attempt->$field) {
+                $info[] = html_writer::div(get_string('fieldandvalue', 'quiz_gradingstudents',
+                        ['field' => \core_user\fields::get_display_name($field), 'value' => $attempt->$field]));
+            }
+        }
 
         $cfmcode = quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
                 $this->cm->idnumber,  $attempt->idnumber);
-        $cfmcode = $cfmcode ? get_string('confirmationcode', 'quiz_gradingstudents', $cfmcode) : '';
+        if ($cfmcode) {
+            $info[] = html_writer::div(get_string('fieldandvalue', 'quiz_gradingstudents',
+                        ['field' => get_string('confirmationcodeheading', 'quiz_gradingstudents'), 'value' => $cfmcode]));
+        }
 
         echo $OUTPUT->heading(get_string('gradingstudentx', 'quiz_gradingstudents', $attempt->attemptnumber));
-        if ($cfmcode) {
-            echo html_writer::tag('div', $cfmcode);
-        }
-        if ($pi) {
-            echo html_writer::tag('div', $pi);
-        }
+        echo implode("\n", $info);
         echo html_writer::tag('p', html_writer::link($this->list_questions_url(),
                 get_string('backtothelistofstudentattempts', 'quiz_gradingstudents')),
                 array('class' => 'mdl-align'));
