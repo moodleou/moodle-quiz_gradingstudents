@@ -14,19 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * This file defines the quiz manual grading by students report class.
- *
- * @package   quiz_gradingstudents
- * @copyright 2013 The Open University
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-
 defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/examconfirmationcode.php');
-
 
 /**
  * Quiz report to help teachers manually grade questions by students.
@@ -35,6 +23,7 @@ require_once($CFG->dirroot . '/mod/quiz/report/gradingstudents/examconfirmationc
  * - List student attempts that might need manual grading / regarding.
  * - Provide a UI to grade all questions of a particular quiz attempt.
  *
+ * @package   quiz_gradingstudents
  * @copyright 2013 The Open university
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -183,7 +172,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
     protected function display_index($includeauto) {
         global $OUTPUT;
 
-        $showconfirmationcode = quiz_gradingstudents_report_exam_confirmation_code::quiz_can_have_confirmation_code(
+        $showconfirmationcode = quiz_gradingstudents_ou_confirmation_code::quiz_can_have_confirmation_code(
                 $this->cm->idnumber);
 
         $attempts = $this->get_formatted_student_attempts();
@@ -232,8 +221,8 @@ class quiz_gradingstudents_report extends quiz_default_report {
             }
             if ($showconfirmationcode) {
                 if ($attempt->idnumber) {
-                    $row[] = quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
-                            $this->cm->idnumber, $attempt->idnumber, );
+                    $row[] = quiz_gradingstudents_ou_confirmation_code::get_confirmation_code(
+                            $this->cm, (object) ['id' => $attempt->userid, 'idnumber' => $attempt->idnumber]);
                 } else {
                     $row[] = '-';
                 }
@@ -325,8 +314,8 @@ class quiz_gradingstudents_report extends quiz_default_report {
             }
         }
 
-        $cfmcode = quiz_gradingstudents_report_exam_confirmation_code::get_confirmation_code(
-                $this->cm->idnumber,  $attempt->idnumber);
+        $cfmcode = quiz_gradingstudents_ou_confirmation_code::get_confirmation_code(
+                $this->cm, (object) ['id' => $attempt->userid, 'idnumber' => $attempt->idnumber]);
         if ($cfmcode) {
             $info[] = html_writer::div(get_string('fieldandvalue', 'quiz_gradingstudents',
                         ['field' => get_string('confirmationcodeheading', 'quiz_gradingstudents'), 'value' => $cfmcode]));

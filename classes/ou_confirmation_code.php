@@ -34,7 +34,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2013 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_gradingstudents_report_exam_confirmation_code {
+class quiz_gradingstudents_ou_confirmation_code {
     /** @var int value used in the calculation. */
     const HASH_START = 5381;
     /** @var int value used in the calculation. */
@@ -52,7 +52,7 @@ class quiz_gradingstudents_report_exam_confirmation_code {
      * @param string|null $quizidnumber the quiz idnumber.
      * @return string|null string like eca01 or exm01 if it can, null if it can't.
      */
-    public static function quiz_can_have_confirmation_code(?string $quizidnumber) {
+    public static function quiz_can_have_confirmation_code(?string $quizidnumber): ?string {
         if (!preg_match('~\w+-\w+\.((?i:eca|exm|icme|prj)\d+)~', $quizidnumber, $matches)) {
             return null;
         }
@@ -63,26 +63,29 @@ class quiz_gradingstudents_report_exam_confirmation_code {
     /**
      * Check for the correct idnumber and generate a confirmation code
      *
-     * @param string $quizidnumber quiz idnumber.
-     * @param string $pi student user's idnumber.
-     * @param int $version (optional) defaults to 1.
+     * @param stdClass|cm_info $cm quiz cm.
+     * @param stdClass $user the user object for the student. (Only id and idnumber required.)
      * @return null|string the computed code if relevant, else null.
      */
-    public static function get_confirmation_code($quizidnumber, $pi, $version = 1) {
-        $task = self::quiz_can_have_confirmation_code($quizidnumber);
+    public static function get_confirmation_code($cm, stdClass $user): ?string {
+        $task = self::quiz_can_have_confirmation_code($cm->idnumber);
         if (!$task) {
             return null;
         }
-        list($courseshortname, $notused) = explode('.', $quizidnumber, 2);
-        list($module, $pres) = explode('-', $courseshortname, 2);
+
+        [$courseshortname] = explode('.', $cm->idnumber, 2);
+        [$module, $pres] = explode('-', $courseshortname, 2);
         $task = core_text::strtoupper($task);
         $module = core_text::strtoupper($module);
         $pres = core_text::strtoupper($pres);
-        return self::calculate_confirmation_code($pi, $module, $pres, $task, $version);
+
+        [$module, $pres] = self::update_for_variant($module, $pres, $cm, $user);
+        return self::calculate_confirmation_code($user->idnumber, $module, $pres, $task, 1);
     }
 
     /**
      * Compute the confirmation code for a student for on a task.
+     *
      * @param string $pi the student's PI.
      * @param string $module the module code, e.g. B747.
      * @param string $pres the short presentation code, e.g. 13B.
@@ -90,16 +93,18 @@ class quiz_gradingstudents_report_exam_confirmation_code {
      * @param int $version defaults to 1.
      * @return string The confirmation code.
      */
-    public static function calculate_confirmation_code($pi, $module, $pres, $task, $version = 1) {
+    public static function calculate_confirmation_code(string $pi, string $module, string $pres,
+            string $task, int $version): string {
         return self::calculate_hash($pi . $module . $version . $pres . $task);
     }
 
     /**
      * The raw hash algorithm.
+     *
      * @param string $string the input string.
      * @return string The confirmation code.
      */
-    public static function calculate_hash($string) {
+    public static function calculate_hash(string $string): string {
         $cleanstring = str_replace(' ', '', $string);
 
         $hash = self::HASH_START;
@@ -127,34 +132,32 @@ class quiz_gradingstudents_report_exam_confirmation_code {
     }
 
     /**
-     * Get the IDNumber of student that need to grade
+     * Update the effective $module, $pres, if the user appears to be in a variant.
      *
-     * @param int $qubaid The id of question usage that need to grade
-     * @param int $quizid The id of quiz that need to grade
-     * @return string IDNumber of student that need to grade
+     * @param string $module from quiz idnumbe.
+     * @param string $pres from quiz idnumbe.
+     * @param stdClass|cm_info $cm quiz cm
+     * @param stdClass $user user.
+     * @return string[] array with two elements, [$module, $pres].
      */
-    public static function get_student_id_number_by_question_usage_id($qubaid, $quizid): string {
+    protected static function update_for_variant(string $module, string $pres, $cm, stdClass $user): array {
         global $DB;
 
-        $idnumber = '';
-        $params = [
-                'uniqueid' => $qubaid,
-                'state' => quiz_attempt::FINISHED,
-                'quiz' => $quizid
-        ];
+        $variantgroups = $DB->get_records_sql("
+                SELECT g.id, g.name
+                  FROM {groups_members} gm
+                  JOIN {groups} g ON g.id = gm.groupid
+                 WHERE gm.userid = ? AND g.courseid = ?
+                   AND g.name LIKE '% variant group'
+                ORDER BY name DESC
+            ", [$user->id, $cm->course], 0, 1);
 
-        $attempt = $DB->get_record_sql('
-                SELECT u.idnumber
-                  FROM {quiz_attempts} quiza
-                  JOIN {user} u ON u.id = quiza.userid
-                 WHERE quiza.uniqueid = :uniqueid
-                       AND quiza.state = :state
-                       AND quiza.quiz = :quiz', $params);
-
-        if ($attempt) {
-            $idnumber = $attempt->idnumber;
+        if (!$variantgroups) {
+            return [$module, $pres];
         }
 
-        return $idnumber;
+        $groupname = reset($variantgroups)->name;
+        [$modulepres] = explode(' ', $groupname, 2);
+        return explode('-', $modulepres, 2);
     }
 }
