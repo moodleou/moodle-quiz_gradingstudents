@@ -75,6 +75,9 @@ class quiz_gradingstudents_ou_confirmation_code {
 
         [$courseshortname] = explode('.', $cm->idnumber, 2);
         [$module, $pres] = explode('-', $courseshortname, 2);
+        if (!$module || !$pres) {
+            return null;
+        }
         $task = core_text::strtoupper($task);
         $module = core_text::strtoupper($module);
         $pres = core_text::strtoupper($pres);
