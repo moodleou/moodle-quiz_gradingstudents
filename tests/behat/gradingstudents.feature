@@ -8,23 +8,43 @@ Feature: Grading by students
     And the following "users" exist:
       | username | firstname | lastname | email               | idnumber | profile_field_frog |
       | teacher  | T1        | Teacher  | teacher@moodle.com  | T1000    | green frog         |
+      | marker   | M1        | Marker   | marker@moodle.com  | M1000    | African Dwarf      |
       | student1 | S1        | Student1 | student1@moodle.com | S1000    | little frog        |
       | student2 | S2        | Student2 | student2@moodle.com | S2000    | yellow frog        |
+      | student3 | S3        | Student3 | student3@moodle.com | S3000    | chubby frog        |
     And the following "courses" exist:
       | fullname | shortname | category |
       | Course 1 | C1        | 0        |
-
     And the following "course enrolments" exist:
       | user     | course | role           |
       | teacher  | C1     | editingteacher |
+      | marker   | C1     | teacher        |
       | student1 | C1     | student        |
       | student2 | C1     | student        |
+      | student3 | C1     | student        |
+    And the following "groupings" exist:
+      | name         | course  | idnumber |
+      | Tutor groups | C1      | tging    |
+    And the following "groups" exist:
+      | name         | course | idnumber |
+      | Tutor group  | C1     | tg       |
+      | Marker group | C1     | mg       |
+    And the following "grouping groups" exist:
+      | grouping | group |
+      | tging    | tg    |
+    And the following "group members" exist:
+      | user     | group |
+      | teacher  | tg    |
+      | student1 | tg    |
+      | student2 | tg    |
+      | marker   | mg    |
+      | student3 | mg    |
     And the following "question categories" exist:
       | contextlevel | reference | name           |
       | Course       | C1        | Test questions |
     And the following "activities" exist:
-      | activity   | name   | course | idnumber |
-      | quiz       | Quiz 1 | C1     | q1       |
+      | activity   | name   | course | idnumber | groupmode | grouping |
+      | quiz       | Quiz 1 | C1     | q1       | 1         | tging    |
     And the following "questions" exist:
       | questioncategory | qtype       | name  |
       | Test questions   | shortanswer | SA    |
@@ -112,3 +132,16 @@ Feature: Grading by students
     Then I should not see "S1 Student1" in the "student1" "table_row"
     And I should see "Favourite frog"
     Then I should see "little frog" in the "student1" "table_row"
+
+  Scenario: A marker cannot access the report in separate group
+    Given I am on the "Quiz 1" "mod_quiz > View" page logged in as "marker"
+    And user "student1" has attempted "Quiz 1" with responses:
+      | slot | response |
+      |   1  | frog     |
+    And user "student2" has attempted "Quiz 1" with responses:
+      | slot | response |
+      |   1  | Duck     |
+    When I navigate to "Results > Manual grading by student" in current page administration
+    Then I should see "Quiz 1"
+    And I should see "Separate groups: All participants"
+    Then I should see "Sorry, but you need to be part of a group to see this page."

@@ -180,6 +180,12 @@ class quiz_gradingstudents_report extends quiz_default_report {
             // Groups is being used.
             groups_print_activity_menu($this->cm, $this->list_questions_url());
         }
+        // Get the current group for the user looking at the report.
+        $currentgroup = $this->get_current_group($this->cm, $this->course, $this->context);
+        if ($currentgroup == self::NO_GROUPS_ALLOWED) {
+            echo $OUTPUT->notification(get_string('notingroup'));
+            return;
+        }
         echo $OUTPUT->heading(get_string('questionsthatneedgrading', 'quiz_gradingstudents'));
         if ($includeauto) {
             $linktext = get_string('hideautomaticallygraded', 'quiz_gradingstudents');
