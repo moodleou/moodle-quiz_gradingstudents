@@ -106,24 +106,27 @@ class quiz_gradingstudents_ou_confirmation_code_test extends advanced_testcase {
     }
 
     public function test_with_variant_groups() {
-    global $DB;
+        global $DB;
+
+        if (!class_exists('\local_oudataload\util')) {
+            $this->markTestSkipped('This test verifies behaviour related to other OU-specific plugins.');
+        }
+
         $this->resetAfterTest();
 
         // Create a course and some test users.
         $generator = $this->getDataGenerator();
-        $course = $generator->create_course(array('format' => 'oustudyplan',
-                'shortname' => 'SK121-13J', array('createsections' => false)));
-        $student1 = $generator->create_user(array('idnumber' => 'B7435280'));
-        $student2 = $generator->create_user(array('idnumber' => 'B7435281'));
+        $course = $generator->create_course(['format' => 'oustudyplan',
+                'shortname' => 'SK121-13J', ['createsections' => false]]);
+        $student1 = $generator->create_user(['idnumber' => 'B7435280']);
+        $student2 = $generator->create_user(['idnumber' => 'B7435281']);
         $generator->enrol_user($student1->id, $course->id);
         $generator->enrol_user($student2->id, $course->id);
 
         // Create variant groups with teacher and student in it.
-        $group = $generator->create_group(
-                array('courseid' => $course->id, 'name' => 'SK121-13R variant group'));
+        $group = $generator->create_group(['courseid' => $course->id, 'name' => 'SK121-13R variant group']);
         groups_add_member($group, $student1);
-        $group = $generator->create_group(
-                array('courseid' => $course->id, 'name' => 'SDK121-13J variant group'));
+        $group = $generator->create_group(['courseid' => $course->id, 'name' => 'SDK121-13J variant group']);
         groups_add_member($group, $student2);
 
         // CVP entries.
@@ -140,7 +143,7 @@ class quiz_gradingstudents_ou_confirmation_code_test extends advanced_testcase {
 
         $fakecm = (object) ['id' => 12, 'course' => $course->id, 'idnumber' => 'sk121-13j.exm01'];
 
-        // Test
+        // Test.
         $this->assertEquals('VGWM', quiz_gradingstudents_ou_confirmation_code::get_confirmation_code(
                 $fakecm, $student1));
         $this->assertEquals('CSGS', quiz_gradingstudents_ou_confirmation_code::get_confirmation_code(

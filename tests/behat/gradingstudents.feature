@@ -8,7 +8,7 @@ Feature: Grading by students
     And the following "users" exist:
       | username | firstname | lastname | email               | idnumber | profile_field_frog |
       | teacher  | T1        | Teacher  | teacher@moodle.com  | T1000    | green frog         |
-      | marker   | M1        | Marker   | marker@moodle.com  | M1000    | African Dwarf      |
+      | marker   | M1        | Marker   | marker@moodle.com   | M1000    | African Dwarf      |
       | student1 | S1        | Student1 | student1@moodle.com | S1000    | little frog        |
       | student2 | S2        | Student2 | student2@moodle.com | S2000    | yellow frog        |
       | student3 | S3        | Student3 | student3@moodle.com | S3000    | chubby frog        |
@@ -55,8 +55,7 @@ Feature: Grading by students
       | showuseridentity | username,idnumber,profile_field_frog |
 
   Scenario: report with no attempts
-    When I am on the "Quiz 1" "mod_quiz > View" page logged in as "teacher"
-    And I navigate to "Results > Manual grading by student" in current page administration
+    When I am on the "Quiz 1" "quiz_gradingstudents > Report" page logged in as "teacher"
     Then I should see "Manual grading by student"
     And I should see "Quiz 1"
     And I should see "Nothing to display"
@@ -69,8 +68,7 @@ Feature: Grading by students
       | slot | response |
       |   1  | Cat      |
 
-    When I am on the "Quiz 1" "mod_quiz > View" page logged in as "teacher"
-    And I navigate to "Results > Manual grading by student" in current page administration
+    When I am on the "Quiz 1" "quiz_gradingstudents > Report" page logged in as "teacher"
     Then I should see "Manual grading by student"
     When I follow "Also show questions that have been graded automatically"
     Then I should see "S1000"
@@ -109,12 +107,11 @@ Feature: Grading by students
     And user "student2" has attempted "Quiz 1" with responses:
       | slot | response |
       |   1  | Rabbit   |
-  When I am on the "Quiz 1" "mod_quiz > View" page logged in as "admin"
-  When I navigate to "Results > Manual grading by student" in current page administration
-  When I follow "Also show questions that have been graded automatically"
-  Then I should see "S1 Student1" in the "student1" "table_row"
-  And I should see "Favourite frog"
-  Then I should see "little frog" in the "student1" "table_row"
+    When I am on the "Quiz 1" "quiz_gradingstudents > Report" page logged in as "admin"
+    And I follow "Also show questions that have been graded automatically"
+    Then I should see "S1 Student1" in the "student1" "table_row"
+    And I should see "Favourite frog"
+    And I should see "little frog" in the "student1" "table_row"
 
   Scenario: Teacher without permission can see custom fields and not student name
     Given user "student1" has attempted "Quiz 1" with responses:
@@ -126,22 +123,20 @@ Feature: Grading by students
     And the following "permission overrides" exist:
       | capability                    | permission | role                  | contextlevel | reference |
       | quiz/grading:viewstudentnames | Prevent    | editingteacher        | Course       | C1        |
-    When I am on the "Quiz 1" "mod_quiz > View" page logged in as "teacher"
-    When I navigate to "Results > Manual grading by student" in current page administration
-    When I follow "Also show questions that have been graded automatically"
+    When I am on the "Quiz 1" "quiz_gradingstudents > Report" page logged in as "teacher"
+    And I follow "Also show questions that have been graded automatically"
     Then I should not see "S1 Student1" in the "student1" "table_row"
     And I should see "Favourite frog"
-    Then I should see "little frog" in the "student1" "table_row"
+    And I should see "little frog" in the "student1" "table_row"
 
   Scenario: A marker cannot access the report in separate group
-    Given I am on the "Quiz 1" "mod_quiz > View" page logged in as "marker"
-    And user "student1" has attempted "Quiz 1" with responses:
+    Given user "student1" has attempted "Quiz 1" with responses:
       | slot | response |
       |   1  | frog     |
     And user "student2" has attempted "Quiz 1" with responses:
       | slot | response |
       |   1  | Duck     |
-    When I navigate to "Results > Manual grading by student" in current page administration
+    When I am on the "Quiz 1" "quiz_gradingstudents > Report" page logged in as "marker"
     Then I should see "Quiz 1"
     And I should see "Separate groups: All participants"
-    Then I should see "Sorry, but you need to be part of a group to see this page."
+    And I should see "Sorry, but you need to be part of a group to see this page."
