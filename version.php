@@ -24,11 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2020121800;
+$plugin->version   = 2022031100;
 $plugin->requires  = 2020061500;
 $plugin->cron      = 0;
 $plugin->component = 'quiz_gradingstudents';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.8 for Moodle 3.9+';
+$plugin->release   = 'v1.9 for Moodle 3.9+';
 
 $plugin->outestssufficient = true;
