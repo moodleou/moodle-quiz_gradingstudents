@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use local_oudataload\util;
+
 /**
  * Unit tests for {@link quiz_grading_students_exam_confirmation_code}
  *
@@ -26,7 +28,7 @@ class quiz_gradingstudents_ou_confirmation_code_test extends advanced_testcase {
      * Data provider for test_quiz_can_have_confirmation_code.
      * @return array
      */
-    public function quiz_can_have_confirmation_code_cases(): array {
+    public static function quiz_can_have_confirmation_code_cases(): array {
         return [
             ['sk121-13r.eca30', 'eca30'],
             ['sk121-13j.exm01', 'exm01'],
@@ -71,7 +73,7 @@ class quiz_gradingstudents_ou_confirmation_code_test extends advanced_testcase {
      *
      * @return array
      */
-    public function get_confirmation_code_cases(): array {
+    public static function get_confirmation_code_cases(): array {
         return [
             ['sk121-13r.eca30', 'B7435280', 'DZSD'], // From issue #7168.
             ['sk121-13j.exm01', 'B7435280', 'VZVG'], // From issue #7168.
