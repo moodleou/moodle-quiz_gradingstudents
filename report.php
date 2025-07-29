@@ -351,7 +351,7 @@ class quiz_gradingstudents_report extends report_base {
         foreach ($attempt->questions as $slot => $question) {
             if ($this->normalise_state($question->state) === $grade ||
                     $question->state === $grade || $grade === 'all') {
-                echo $quba->render_question($slot, $displayoptions, $this->questions[$slot]->number);
+                echo $quba->render_question($slot, $displayoptions, ($this->questions[$slot]->number ?? null));
             }
         }
 
