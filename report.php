@@ -16,6 +16,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use \mod_quiz\local\reports\report_base;
+
 /**
  * Quiz report to help teachers manually grade questions by students.
  *
@@ -27,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2013 The Open university
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_gradingstudents_report extends quiz_default_report {
+class quiz_gradingstudents_report extends report_base {
 
     protected $viewoptions = array();
     protected $questions;
