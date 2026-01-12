@@ -31,4 +31,6 @@ $plugin->component = 'quiz_gradingstudents';
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = 'v1.9 for Moodle 3.9+';
 
+$plugin->dependencies = ['local_oudataload' => ANY_VERSION];
+
 $plugin->outestssufficient = true;

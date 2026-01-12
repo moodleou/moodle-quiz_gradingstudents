@@ -14,16 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Implementation of the OU's 'Confirmation code' algorithm.
- *
- * @package    quiz_gradingstudents
- * @copyright  2013 The Open University
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-defined('MOODLE_INTERNAL') || die();
-
+use local_oudataload\backend;
 
 /**
  * This class implements the OU's 'Confirmation code' algorithm for end-of-course assessed tasks.
@@ -31,6 +22,7 @@ defined('MOODLE_INTERNAL') || die();
  * Graders need to enter this into the grading system as a
  * checksum to ensure that they are entering marks for the right student / task.
  *
+ * @package    quiz_gradingstudents
  * @copyright  2013 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -53,7 +45,7 @@ class quiz_gradingstudents_ou_confirmation_code {
      * @return string|null string like eca01 or exm01 if it can, null if it can't.
      */
     public static function quiz_can_have_confirmation_code(?string $quizidnumber): ?string {
-        if (!preg_match('~\w+-\w+\.((?i:eca|exm|icme|prj)\d+)~', $quizidnumber, $matches)) {
+        if (!preg_match('~\w+-\w+\.((?i:eca|exm|icme|prj)\d+)~', $quizidnumber ?? '', $matches)) {
             return null;
         }
 
@@ -143,24 +135,19 @@ class quiz_gradingstudents_ou_confirmation_code {
      * @param stdClass $user user.
      * @return string[] array with two elements, [$module, $pres].
      */
-    protected static function update_for_variant(string $module, string $pres, $cm, stdClass $user): array {
-        global $DB;
-
-        $variantgroups = $DB->get_records_sql("
-                SELECT g.id, g.name
-                  FROM {groups_members} gm
-                  JOIN {groups} g ON g.id = gm.groupid
-                 WHERE gm.userid = ? AND g.courseid = ?
-                   AND g.name LIKE '% variant group'
-                ORDER BY name DESC
-            ", [$user->id, $cm->course], 0, 1);
-
-        if (!$variantgroups) {
+    public static function update_for_variant(string $module, string $pres, $cm, stdClass $user): array {
+        if (!class_exists('\local_oudataload\backend')) {
+            return [$module, $pres];
+        }
+        $variants = \local_oudataload\backend::get_course_and_pres_codes($cm->course, $user->id);
+        if (!$variants) {
             return [$module, $pres];
         }
 
-        $groupname = reset($variantgroups)->name;
-        [$modulepres] = explode(' ', $groupname, 2);
-        return explode('-', $modulepres, 2);
+        // We pick the last variant in the list (sorted by name of group). The most common cause of
+        // multiple variants is if they have a normal and a (later) resit presentation, and in that
+        // case the resit presentation is more relevant.
+        $lastvariant = end($variants);
+        return [$lastvariant->course, $lastvariant->pres];
     }
 }

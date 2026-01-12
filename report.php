@@ -13,8 +13,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-defined('MOODLE_INTERNAL') || die();
+use mod_quiz\local\reports\attempts_report;
+use quiz_gradingstudents\report_table;
+use quiz_gradingstudents\report_display_options;
+use mod_quiz\quiz_attempt;
 
 /**
  * Quiz report to help teachers manually grade questions by students.
@@ -27,340 +29,69 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2013 The Open university
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quiz_gradingstudents_report extends quiz_default_report {
-
-    protected $viewoptions = array();
-    protected $questions;
-    protected $course;
-    protected $cm;
-    protected $quiz;
-    protected $context;
-    protected $shownames;
-    protected $showidentityfields;
+class quiz_gradingstudents_report extends attempts_report {
 
     public function display($quiz, $cm, $course) {
-        $this->quiz = $quiz;
-        $this->cm = $cm;
-        $this->course = $course;
-
-        // Get the URL options.
-        $grade = optional_param('grade', null, PARAM_ALPHA);
-        $usageid = optional_param('usageid', 0, PARAM_INT);
-        $slots = optional_param('slots', '', PARAM_SEQUENCE);
-        $includeauto = optional_param('includeauto', false, PARAM_BOOL);
-        if (!in_array($grade, array('all', 'needsgrading', 'autograded', 'manuallygraded'))) {
-            $grade = null;
-        }
-
-        // Assemble the options requried to reload this page.
-        if ($includeauto) {
-            $this->viewoptions['includeauto'] = 1;
-        }
+        global $OUTPUT;
         // Check permissions.
         $this->context = context_module::instance($cm->id);
         require_capability('mod/quiz:grade', $this->context);
-        $this->shownames = has_capability('quiz/grading:viewstudentnames', $this->context);
-        $this->showidentityfields = has_capability('quiz/grading:viewidnumber', $this->context);
-        // Get the list of questions in this quiz.
-        $this->questions = quiz_report_get_significant_questions($quiz);
 
+        // Get the URL options.
+        $options = new report_display_options('gradingstudents', $quiz, $cm, $course);
+        $grade = $options->grade;
+        if (!in_array($options->grade, ['all', 'needsgrading', 'autograded', 'manuallygraded'])) {
+            $grade = null;
+        }
+        $baseurl = $this->base_url($cm);
         // Process any submitted data.
-        if ($data = data_submitted() && confirm_sesskey() && $this->validate_submitted_marks($usageid, $slots)) {
-            $this->process_submitted_data($usageid);
-            redirect(new moodle_url('/mod/quiz/report.php',
-                array('id' => $this->cm->id, 'mode' => 'gradingstudents')));
+        if (data_submitted() && confirm_sesskey() && $this->validate_submitted_marks($options->usageid, $options->slots)) {
+            $this->process_submitted_data($options->usageid, $quiz, $cm, $course);
+            redirect($baseurl);
         }
 
-        $hasquestions = quiz_has_questions($quiz->id);;
-
+        [$currentgroup, $studentsjoins, $groupstudentsjoins, $allowedjoins] = $this->get_students_joins($cm, $course);
         // Start output.
         $this->print_header_and_tabs($cm, $course, $quiz, 'gradingstudents');
+        // Load the required questions.
+        $questions = quiz_report_get_significant_questions($quiz);
+        $table = new report_table($quiz, $this->context, $this->qmsubselect,
+            $options, $groupstudentsjoins, $studentsjoins, $questions, $options->get_url());
+        $table->cm = $cm;
 
+        $hasquestions = quiz_has_questions($quiz->id);
         // What sort of page to display?
         if (!$hasquestions) {
             echo quiz_no_questions_message($quiz, $cm, $this->context);
-
-        } else if (!$usageid) {
-            $this->display_index($includeauto);
-
+        } else if (!$options->usageid) {
+            $table->define_table($allowedjoins, $options);
+            if (groups_get_activity_groupmode($cm)) {
+                // Groups is being used.
+                groups_print_activity_menu($cm, $table->baseurl);
+            }
+            // Get the current group for the user looking at the report.
+            if ($currentgroup == self::NO_GROUPS_ALLOWED) {
+                echo $OUTPUT->notification(get_string('notingroup'));
+                return;
+            }
+            if ($options->includeauto) {
+                $linktext = get_string('hideautomaticallygraded', 'quiz_gradingstudents');
+            } else {
+                $linktext = get_string('alsoshowautomaticallygraded', 'quiz_gradingstudents');
+            }
+            if ($options->includeauto) {
+                $baseurl->remove_params('includeauto');
+            } else {
+                $baseurl->param('includeauto', 1);
+            }
+            echo $OUTPUT->heading(get_string('questionsthatneedgrading', 'quiz_gradingstudents'));
+            echo html_writer::tag('p', html_writer::link($baseurl, $linktext), ['class' => 'toggleincludeauto']);
+            $table->out(0, $table->use_initials);
         } else {
-            $this->display_grading_interface($usageid, $slots, $grade);
+            $table->display_grading_interface($options, $grade, $allowedjoins);
         }
         return true;
-    }
 
-    /**
-     * Return the base URL of the report.
-     *
-     * @return moodle_url the URL.
-     */
-    protected function base_url() {
-        return new moodle_url('/mod/quiz/report.php',
-                array('id' => $this->cm->id, 'mode' => 'gradingstudents'));
-    }
-
-    /**
-     * Get the URL of the front page of the report that lists all attempts.
-     *
-     * @param bool|null $includeauto if not given, use the current setting, otherwise,
-     *      force a particular value of includeauto in the URL.
-     * @return moodle_url the URL.
-     */
-    protected function list_questions_url($includeauto = null) {
-        $url = $this->base_url();
-
-        $url->params($this->viewoptions);
-
-        if ($includeauto !== null) {
-            if ($includeauto) {
-                $url->param('includeauto', 1);
-            } else {
-                $url->remove_params('includeauto');
-            }
-        }
-        return $url;
-    }
-
-    /**
-     * Return url for appropriate questions.
-     *
-     * @param int $usageid the usage id of the attempt to grade.
-     * @param string $slots comma-sparated list of the slots to grade.
-     * @param string $grade type of things to grade, e.g. 'needsgrading'.
-     * @return moodle_url the requested URL.
-     */
-    protected function grade_question_url($usageid, $slots, $grade) {
-        $url = $this->base_url();
-        $url->params(array('usageid' => $usageid, 'slots' => $slots, 'grade' => $grade));
-        $url->params($this->viewoptions);
-        return $url;
-    }
-
-    /**
-     * Return formatted output.
-     *
-     * @param object $attempt augmented quiz_attempts row as from get_formatted_student_attempts.
-     * @param string $type type of attempts, e.g. 'needsgrading'.
-     * @param string $gradestring corresponding lang string for the action, e.g. 'grade'.
-     * @return string formatted string.
-     */
-    protected function format_count_for_table($attempt, $type, $gradestring) {
-        $counts = $attempt->$type;
-        $slots = array();
-        if ($counts > 0) {
-            foreach ($attempt->questions as $id => $question) {
-                if ($type === $this->normalise_state($question->state) || $type === 'all') {
-                    $slots[] = $question->slot;
-                }
-            }
-        }
-        $slots = implode(',', $slots);
-        $result = $counts;
-        if ($counts > 0) {
-            $result .= ' ' . html_writer::link($this->grade_question_url(
-                    $attempt->uniqueid, $slots, $type),
-                    get_string($gradestring, 'quiz_gradingstudents'),
-                    array('class' => 'gradetheselink'));
-        }
-        return $result;
-    }
-
-    /**
-     * Display data (the students attempts) in a table format
-     * @param string $includeauto
-     */
-    protected function display_index($includeauto) {
-        global $OUTPUT;
-
-        $showconfirmationcode = quiz_gradingstudents_ou_confirmation_code::quiz_can_have_confirmation_code(
-                $this->cm->idnumber);
-
-        $attempts = $this->get_formatted_student_attempts();
-        if ($groupmode = groups_get_activity_groupmode($this->cm)) {
-            // Groups is being used.
-            groups_print_activity_menu($this->cm, $this->list_questions_url());
-        }
-        // Get the current group for the user looking at the report.
-        $currentgroup = $this->get_current_group($this->cm, $this->course, $this->context);
-        if ($currentgroup == self::NO_GROUPS_ALLOWED) {
-            echo $OUTPUT->notification(get_string('notingroup'));
-            return;
-        }
-        echo $OUTPUT->heading(get_string('questionsthatneedgrading', 'quiz_gradingstudents'));
-        if ($includeauto) {
-            $linktext = get_string('hideautomaticallygraded', 'quiz_gradingstudents');
-        } else {
-            $linktext = get_string('alsoshowautomaticallygraded', 'quiz_gradingstudents');
-        }
-        echo html_writer::tag('p', html_writer::link($this->list_questions_url(!$includeauto),
-                $linktext), array('class' => 'toggleincludeauto'));
-
-        $identityfields = \core_user\fields::get_identity_fields($this->context, true);
-
-        $data = array();
-        foreach ($attempts as $key => $attempt) {
-            if ($attempt->all == 0) {
-                continue;
-            }
-            if (!$includeauto && $attempt->needsgrading == 0 && $attempt->manuallygraded == 0) {
-                continue;
-            }
-            if (has_capability('mod/quiz:viewreports', $this->context)) {
-                $reviewlink = html_writer::tag('a',
-                                        get_string('attemptid', 'quiz_gradingstudents', $attempt->attemptnumber),
-                                        array('href' => new moodle_url('/mod/quiz/review.php',
-                                        array('attempt' => $attempt->attemptid))));
-            } else {
-                $reviewlink = get_string('attemptid', 'quiz_gradingstudents', $attempt->attemptnumber);
-            }
-
-            $row = [];
-            if ($this->shownames) {
-
-                $row[] = fullname($attempt);
-            }
-
-            if ($this->showidentityfields) {
-                foreach ($identityfields as $fieldname) {
-                      $row[] = format_string($attempt->$fieldname);
-                }
-            }
-            if ($showconfirmationcode) {
-                if ($attempt->idnumber) {
-                    $row[] = quiz_gradingstudents_ou_confirmation_code::get_confirmation_code(
-                            $this->cm, (object) ['id' => $attempt->userid, 'idnumber' => $attempt->idnumber]);
-                } else {
-                    $row[] = '-';
-                }
-            }
-            $row[] = $reviewlink;
-            $row[] = $this->format_count_for_table($attempt, 'needsgrading', 'grade');
-            $row[] = $this->format_count_for_table($attempt, 'manuallygraded', 'updategrade');
-
-            if ($includeauto) {
-                $row[] = $this->format_count_for_table($attempt, 'autograded', 'updategrade');
-            }
-
-            $row[] = $this->format_count_for_table($attempt, 'all', 'gradeall');
-            $data[] = $row;
-        }
-
-        if (empty($data)) {
-            echo $OUTPUT->heading(get_string('nothingfound', 'quiz_gradingstudents'));
-            return;
-        }
-
-        $table = new html_table();
-        $table->class = 'generaltable';
-        $table->id = 'studentstograde';
-
-        if ($this->shownames) {
-            $table->head[] = get_string('student', 'quiz_gradingstudents');
-        }
-        if ($this->showidentityfields) {
-            foreach ($identityfields as $fieldname) {
-                $table->head[] = \core_user\fields::get_display_name($fieldname);
-
-            }
-        }
-        if ($showconfirmationcode) {
-            $table->head[] = get_string('confirmationcodeheading', 'quiz_gradingstudents');
-        }
-        $table->head[] = get_string('attempt', 'quiz_gradingstudents');
-        $table->head[] = get_string('tograde', 'quiz_gradingstudents');
-        $table->head[] = get_string('alreadygraded', 'quiz_gradingstudents');
-
-        if ($includeauto) {
-            $table->head[] = get_string('automaticallygraded', 'quiz_gradingstudents');
-        }
-        $table->head[] = get_string('total', 'quiz_gradingstudents');
-
-        $table->data = $data;
-        echo html_writer::div(html_writer::table($table), 'no-overflow');
-    }
-
-    /**
-     * Display the UI for grading or regrading questions.
-     *
-     * @param int $usageid the usage id of the attempt to grade.
-     * @param string $slots comma-separate list of which slots to grade.
-     * @param string $grade the type of slots to grade, e.g. 'needsgrading'.
-     */
-    protected function display_grading_interface($usageid, $slots, $grade) {
-        global $CFG, $OUTPUT, $PAGE;
-
-        $attempts = $this->get_formatted_student_attempts();
-        $attempt = $attempts[$usageid];
-
-         // If not, redirect back to the list.
-        if (!$attempt || $attempt->$grade == 0) {
-            redirect($this->list_questions_url(), get_string('alldoneredirecting', 'quiz_gradingstudents'));
-        }
-
-        // Prepare the form.
-        $hidden = array(
-            'id' => $this->cm->id,
-            'mode' => 'gradingstudents',
-            'usageid' => $usageid,
-            'slots' => $slots,
-        );
-
-        if (array_key_exists('includeauto', $this->viewoptions)) {
-            $hidden['includeauto'] = $this->viewoptions['includeauto'];
-        }
-
-        // Print the heading and form.
-        echo question_engine::initialise_js();
-
-        $info = [];
-        foreach (\core_user\fields::get_identity_fields($this->context) as $field) {
-            if ($attempt->$field) {
-                $info[] = html_writer::div(get_string('fieldandvalue', 'quiz_gradingstudents',
-                        ['field' => \core_user\fields::get_display_name($field), 'value' => $attempt->$field]));
-            }
-        }
-
-        $cfmcode = quiz_gradingstudents_ou_confirmation_code::get_confirmation_code(
-                $this->cm, (object) ['id' => $attempt->userid, 'idnumber' => $attempt->idnumber]);
-        if ($cfmcode) {
-            $info[] = html_writer::div(get_string('fieldandvalue', 'quiz_gradingstudents',
-                        ['field' => get_string('confirmationcodeheading', 'quiz_gradingstudents'), 'value' => $cfmcode]));
-        }
-
-        echo $OUTPUT->heading(get_string('gradingstudentx', 'quiz_gradingstudents', $attempt->attemptnumber));
-        echo implode("\n", $info);
-        echo html_writer::tag('p', html_writer::link($this->list_questions_url(),
-                get_string('backtothelistofstudentattempts', 'quiz_gradingstudents')),
-                array('class' => 'mdl-align'));
-
-        // Display the form with one section for each attempt.
-        $sesskey = sesskey();
-        echo html_writer::start_tag('form', array('method' => 'post',
-                'action' => $this->grade_question_url($usageid, $slots, $grade),
-                'class' => 'mform', 'id' => 'manualgradingform')) .
-                html_writer::start_tag('div') .
-                html_writer::input_hidden_params(new moodle_url('', array(
-                                'usageid' => $usageid, 'slots' => $slots, 'sesskey' => $sesskey)));
-            $quba = question_engine::load_questions_usage_by_activity($usageid);
-            $displayoptions = quiz_get_review_options($this->quiz, $attempt, $this->context);
-            $displayoptions->generalfeedback = question_display_options::HIDDEN;
-            $displayoptions->history = question_display_options::HIDDEN;
-            $displayoptions->manualcomment = question_display_options::EDITABLE;
-        foreach ($attempt->questions as $slot => $question) {
-            if ($this->normalise_state($question->state) === $grade ||
-                    $question->state === $grade || $grade === 'all') {
-                echo $quba->render_question($slot, $displayoptions, $this->questions[$slot]->number);
-            }
-        }
-
-        echo html_writer::tag('div', html_writer::empty_tag('input', array(
-                'type' => 'submit', 'value' => get_string('saveandgotothelistofattempts', 'quiz_gradingstudents'))),
-                array('class' => 'mdl-align')) .
-                html_writer::end_tag('div') . html_writer::end_tag('form');
-
-        $PAGE->requires->string_for_js('changesmadereallygoaway', 'moodle');
-        $PAGE->requires->yui_module('moodle-core-formchangechecker',
-                'M.core_formchangechecker.init', [['formid' => 'manualgradingform']]);
     }
 
     /**
@@ -375,7 +106,7 @@ class quiz_gradingstudents_report extends quiz_default_report {
             return false;
         }
         if (!$slots) {
-            $slots = array();
+            $slots = [];
         } else {
             $slots = explode(',', $slots);
         }
@@ -392,153 +123,25 @@ class quiz_gradingstudents_report extends quiz_default_report {
      * Update the quiz attempt with the new grades.
      *
      * @param int $usageid usage id of the quiz attempt being graded.
+     * @param object $quiz the current quiz of the report.
+     * @param object $cm the current course module object
+     * @param object $course current course.
      */
-    protected function process_submitted_data($usageid) {
+    protected function process_submitted_data($usageid, $quiz, $cm, $course): void {
         global $DB;
         $transaction = $DB->start_delegated_transaction();
-        $attempt = $DB->get_record('quiz_attempts', array('uniqueid' => $usageid));
-        $attemptobj = new quiz_attempt($attempt, $this->quiz, $this->cm, $this->course);
+        $attempt = $DB->get_record('quiz_attempts', ['uniqueid' => $usageid]);
+        $attemptobj = new quiz_attempt($attempt, $quiz, $cm, $course);
         $attemptobj->process_submitted_actions(time());
         $transaction->allow_commit();
     }
 
     /**
-     * Return an array of quiz attempts, augmented by user idnumber.
+     * Return the base URL of the report.
      *
-     * @param object $quiz quiz settings.
-     * @return array of objects containing fields from quiz_attempts with user idnumber.
+     * @return moodle_url the URL.
      */
-    private function get_quiz_attempts() {
-        global $DB;
-
-        // Get the group, and the list of significant users.
-        $currentgroup = $this->get_current_group($this->cm, $this->course, $this->context);
-        if ($currentgroup == self::NO_GROUPS_ALLOWED) {
-            return [];
-        }
-
-        $groupstudentsjoins = get_enrolled_with_capabilities_join($this->context, '',
-                ['mod/quiz:attempt', 'mod/quiz:reviewmyattempts'], $currentgroup);
-        $userfieldsapi = \core_user\fields::for_identity($this->context, true)
-                ->with_name()->excluding('id', 'idnumber');
-
-        $params = [
-            'quizid' => $this->quiz->id,
-            'state' => 'finished',
-        ];
-        $fieldssql = $userfieldsapi->get_sql('u', true);
-        $sql = "SELECT qa.id AS attemptid, qa.uniqueid, qa.attempt AS attemptnumber,
-                       qa.quiz AS quizid, qa.layout, qa.userid, qa.timefinish,
-                       qa.preview, qa.state, u.idnumber $fieldssql->selects
-                  FROM {user} u
-                  JOIN {quiz_attempts} qa ON u.id = qa.userid
-                  {$groupstudentsjoins->joins}
-                  {$fieldssql->joins}
-                  WHERE {$groupstudentsjoins->wheres}
-                    AND qa.quiz = :quizid
-                    AND qa.state = :state
-                  ORDER BY u.idnumber ASC, attemptid ASC";
-
-                 $params = array_merge($fieldssql->params, $groupstudentsjoins->params, $params);
-        return $DB->get_records_sql($sql, $params);
-    }
-
-    /**
-     * Return and array of question attempts.
-     * @return array an array of question attempts.
-     */
-    private function get_question_attempts() {
-        global $DB;
-        $sql = "SELECT qa.id AS questionattemptid, qa.slot, qa.questionid, qu.id AS usageid
-                  FROM {question_usages} qu
-                  JOIN {question_attempts} qa ON qa.questionusageid = qu.id
-                 WHERE qu.contextid = :contextid
-              ORDER BY qa.slot ASC";
-        return $DB->get_records_sql($sql, array('contextid' => $this->context->id));
-    }
-
-    /**
-     * Return the latest state for a given question.
-     *
-     * @param int $attemptid as question_attempt id.
-     * @return string the attempt state.
-     */
-    private function get_current_state_for_this_attempt($attemptid) {
-        global $DB;
-        $sql = "SELECT qas.*
-                  FROM {question_attempt_steps} qas
-                 WHERE questionattemptid = :qaid
-              ORDER BY qas.sequencenumber ASC";
-        $states = $DB->get_records_sql($sql, array('qaid' => $attemptid));
-        return end($states)->state;
-    }
-
-    /**
-     * Return an array of quiz attempts with all relevant information for each attempt.
-     */
-    protected function get_formatted_student_attempts() {
-        $quizattempts = $this->get_quiz_attempts();
-        $attempts = $this->get_question_attempts();
-        if (!$quizattempts) {
-            return array();
-        }
-        if (!$attempts) {
-            return array();
-        }
-        $output = array();
-        foreach ($quizattempts as $key => $quizattempt) {
-            $questions = array();
-            $needsgrading = 0;
-            $autograded = 0;
-            $manuallygraded = 0;
-            $all = 0;
-            foreach ($attempts as $attempt) {
-                if ($quizattempt->uniqueid === $attempt->usageid) {
-                    $questions[$attempt->slot] = $attempt;
-                    $state = $this->get_current_state_for_this_attempt($attempt->questionattemptid);
-                    $questions[$attempt->slot]->state = $state;
-
-                    if ($this->normalise_state($state) === 'needsgrading') {
-                        $needsgrading++;
-                    }
-                    if ($this->normalise_state($state) === 'autograded') {
-                        $autograded++;
-                    }
-                    if ($this->normalise_state($state) === 'manuallygraded') {
-                        $manuallygraded++;
-                    }
-                    $all++;
-                }
-            }
-            $quizattempt->needsgrading = $needsgrading;
-            $quizattempt->autograded = $autograded;
-            $quizattempt->manuallygraded = $manuallygraded;
-            $quizattempt->all = $all;
-            $quizattempt->questions = $questions;
-            $output[$quizattempt->uniqueid] = $quizattempt;
-        }
-        return $output;
-    }
-
-    /**
-     * Normalise the string from the database table for easy comparison.
-     *
-     * @param string $state
-     * @return string|null the classified state.
-     */
-    protected function normalise_state($state) {
-        if (!$state) {
-            return null;
-        }
-        if ($state === 'needsgrading') {
-            return 'needsgrading';
-        }
-        if (substr($state, 0, strlen('graded')) === 'graded') {
-            return 'autograded';
-        }
-        if (substr($state, 0, strlen('mangr')) === 'mangr') {
-            return 'manuallygraded';
-        }
-        return null;
+    public static function base_url($cm) {
+        return new moodle_url('/mod/quiz/report.php', ['id' => $cm->id, 'mode' => 'gradingstudents']);
     }
 }

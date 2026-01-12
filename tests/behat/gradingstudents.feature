@@ -47,9 +47,11 @@ Feature: Grading by students
       | quiz       | Quiz 1 | C1     | q1       | 1         | tging    |
     And the following "questions" exist:
       | questioncategory | qtype       | name  |
+      | Test questions   | description | Info  |
       | Test questions   | shortanswer | SA    |
     And quiz "Quiz 1" contains the following questions:
       | question | page | maxmark |
+      | Info     | 1    |         |
       | SA       | 1    |         |
     And the following config values are set as admin:
       | showuseridentity | username,idnumber,profile_field_frog |
@@ -63,20 +65,21 @@ Feature: Grading by students
   Scenario: Report with attempts
     Given user "student1" has attempted "Quiz 1" with responses:
       | slot | response |
-      |   1  | Frog     |
+      | 2    | Frog     |
     And user "student2" has attempted "Quiz 1" with responses:
       | slot | response |
-      |   1  | Cat      |
+      | 2    | Cat      |
 
     When I am on the "Quiz 1" "quiz_gradingstudents > Report" page logged in as "teacher"
     Then I should see "Manual grading by student"
-    When I follow "Also show questions that have been graded automatically"
-    Then I should see "S1000"
+    And I follow "Also show questions that have been graded automatically"
+    And I should see "S1000"
     And I should see "S2000"
+    And I should see "1 grade all"
     And "Attempt 1" "link" should exist
 
     # Adjust the mark for Student1
-    When I click on "update grades" "link" in the "S1000" "table_row"
+    And I click on "update grades" "link" in the "S1000" "table_row"
     And I should see "Frog is a very good answer."
     And I should not see "Generalfeedback: frog or toad would have been OK."
     And I should see "The correct answer is: frog"
@@ -94,10 +97,10 @@ Feature: Grading by students
     And I set the field "Mark" to "0.3"
     And I press "Save and go to the list of attempts"
 
-    Then I should see "Also show questions that have been graded automatically"
+    And I should see "Also show questions that have been graded automatically"
     And I should not see "Automatically graded"
-    When I follow "Also show questions that have been graded automatically"
-    Then I should see "Hide questions that have been graded automatically"
+    And I follow "Also show questions that have been graded automatically"
+    And I should see "Hide questions that have been graded automatically"
     And I should see "Automatically graded"
 
   Scenario: Admin with permission can see custom fields and student name
@@ -112,8 +115,17 @@ Feature: Grading by students
     Then I should see "S1 Student1" in the "student1" "table_row"
     And I should see "Favourite frog"
     And I should see "little frog" in the "student1" "table_row"
+    And "All" "link" should exist
+    And "S1 Student1" "table_row" should appear before "S2 Student2" "table_row"
+    And I follow "First name"
+    And I follow "First name"
+    And "S2 Student2" "table_row" should appear before "S1 Student1" "table_row"
+    And "yellow frog" "table_row" should appear before "little frog" "table_row"
+    And I follow "Favourite frog"
+    And I follow "Favourite frog"
+    And "little frog" "table_row" should appear before "yellow frog" "table_row"
 
-  Scenario: Teacher without permission can see custom fields and not student name
+  Scenario: Teacher without permission can see custom fields and not student name, initial bars.
     Given user "student1" has attempted "Quiz 1" with responses:
       | slot | response |
       |   1  | frog     |
@@ -126,6 +138,7 @@ Feature: Grading by students
     When I am on the "Quiz 1" "quiz_gradingstudents > Report" page logged in as "teacher"
     And I follow "Also show questions that have been graded automatically"
     Then I should not see "S1 Student1" in the "student1" "table_row"
+    And "All" "link" should not exist
     And I should see "Favourite frog"
     And I should see "little frog" in the "student1" "table_row"
 
